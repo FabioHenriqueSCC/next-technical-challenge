@@ -1,0 +1,32 @@
+{
+  "name": "next-technical-challenge",
+  "version": "1.0.0",
+  "description": "Repository created to complete the technical challenge proposed by Next Devices.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "lint:front": "npm --prefix frontend run lint",
+    "lint:back": "npm --prefix backend run lint",
+    "lint": "npm run lint:front && npm run lint:back"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FabioHenriqueSCC/next-technical-challenge.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/FabioHenriqueSCC/next-technical-challenge/issues"
+  },
+  "homepage": "https://github.com/FabioHenriqueSCC/next-technical-challenge#readme",
+  "devDependencies": {
+    "prettier": "^3.7.4"
+  }
+}
