@@ -1,0 +1,48 @@
+{
+  "name": "next-technical-challenge",
+  "version": "1.0.0",
+  "description": "Repository created to complete the technical challenge proposed by Next Devices.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "lint:front": "npm --prefix frontend run lint",
+    "lint:back": "npm --prefix backend run lint",
+    "lint": "npm run lint:front && npm run lint:back",
+    "test:front": "npm --prefix frontend run test --if-present",
+    "test:back": "npm --prefix backend run test --if-present",
+    "test": "npm run test:front && npm run test:back",
+    "build:front": "npm --prefix frontend run build --if-present",
+    "build:back": "npm --prefix backend run build --if-present",
+    "build": "npm run build:front && npm run build:back",
+    "check": "npm run format:check && npm run lint && npm run test && npm run build",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "**/*.{ts,tsx,js,jsx,json,md,css,scss,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FabioHenriqueSCC/next-technical-challenge.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/FabioHenriqueSCC/next-technical-challenge/issues"
+  },
+  "homepage": "https://github.com/FabioHenriqueSCC/next-technical-challenge#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^20.2.0",
+    "@commitlint/config-conventional": "^20.2.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.7.4"
+  }
+}
