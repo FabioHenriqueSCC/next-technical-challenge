@@ -12,7 +12,13 @@
     "format:check": "prettier . --check",
     "lint:front": "npm --prefix frontend run lint",
     "lint:back": "npm --prefix backend run lint",
-    "lint": "npm run lint:front && npm run lint:back"
+    "lint": "npm run lint:front && npm run lint:back",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "**/*.{ts,tsx,js,jsx,json,md,css,scss,yml,yaml}": [
+      "prettier --write"
+    ]
   },
   "repository": {
     "type": "git",
@@ -27,6 +33,10 @@
   },
   "homepage": "https://github.com/FabioHenriqueSCC/next-technical-challenge#readme",
   "devDependencies": {
+    "@commitlint/cli": "^20.2.0",
+    "@commitlint/config-conventional": "^20.2.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "prettier": "^3.7.4"
   }
 }
