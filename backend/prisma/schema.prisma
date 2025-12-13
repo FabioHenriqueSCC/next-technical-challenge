@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ZoneType {
+  RESIDENCIAL
+  COMERCIAL
+  INDUSTRIAL
+  MISTO
+  ESPECIAL
+}
+
+model Zone {
+  id        String   @id @default(uuid())
+  name      String
+  type      ZoneType
+  geometry  Json
+  createdAt DateTime @default(now())
+
+  @@index([name])
+  @@map("zones")
+}
