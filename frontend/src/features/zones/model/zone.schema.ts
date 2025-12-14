@@ -1,13 +1,15 @@
 import { z } from 'zod';
 
+const lngLatSchema = z.tuple([z.number(), z.number()]);
+
 const pointSchema = z.object({
   type: z.literal('Point'),
-  coordinates: z.tuple([z.number(), z.number()]),
+  coordinates: lngLatSchema,
 });
 
 const polygonSchema = z.object({
   type: z.literal('Polygon'),
-  coordinates: z.array(z.array(z.tuple([z.number(), z.number()]))).min(1),
+  coordinates: z.array(z.array(lngLatSchema)).min(1),
 });
 
 export const createZoneSchema = z.object({
