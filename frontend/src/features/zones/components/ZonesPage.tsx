@@ -137,6 +137,7 @@ export default function ZonesPage() {
         size="92%"
         padding="md"
         hiddenFrom="md"
+        zIndex={4000}
       >
         {sidebar}
       </Drawer>

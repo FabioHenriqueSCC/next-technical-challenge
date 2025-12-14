@@ -247,6 +247,7 @@ export default function ZoneForm({
             const next = (v as ZoneType | null) ?? 'RESIDENCIAL';
             form.setFieldValue('type', next);
           }}
+          comboboxProps={{ withinPortal: false }}
         />
 
         <Group grow>

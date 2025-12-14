@@ -34,3 +34,14 @@ body {
 .leaflet-container img {
   max-width: none !important;
 }
+
+/* Mantém Leaflet sempre "abaixo" de modais/drawers */
+.leaflet-pane,
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 0 !important;
+}
+
+.leaflet-control {
+  z-index: 1 !important;
+}
