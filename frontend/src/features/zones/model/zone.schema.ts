@@ -12,7 +12,7 @@ const polygonSchema = z.object({
 
 export const createZoneSchema = z.object({
   name: z.string().min(2, 'Nome muito curto'),
-  type: z.enum(['RESIDENCIAL', 'COMERCIAL', 'INDUSTRIAL', 'MISTO']),
+  type: z.enum(['RESIDENCIAL', 'COMERCIAL', 'INDUSTRIAL', 'MISTO', 'ESPECIAL']),
   geometry: z.union([pointSchema, polygonSchema]),
 });
 

@@ -1,6 +1,11 @@
 import type { Geometry } from 'geojson';
 
-export type ZoneType = 'RESIDENCIAL' | 'COMERCIAL' | 'INDUSTRIAL' | 'MISTO';
+export type ZoneType =
+  | 'RESIDENCIAL'
+  | 'COMERCIAL'
+  | 'INDUSTRIAL'
+  | 'MISTO'
+  | 'ESPECIAL';
 
 export type Zone = {
   id: string;
