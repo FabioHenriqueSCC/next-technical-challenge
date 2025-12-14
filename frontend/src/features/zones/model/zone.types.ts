@@ -1,4 +1,4 @@
-import type { Geometry } from 'geojson';
+import type { ZoneGeometry } from './zone.geometry';
 
 export type ZoneType =
   | 'RESIDENCIAL'
@@ -11,12 +11,12 @@ export type Zone = {
   id: string;
   name: string;
   type: ZoneType;
-  geometry: Geometry;
+  geometry: ZoneGeometry;
   createdAt: string;
 };
 
 export type CreateZoneDTO = {
   name: string;
   type: ZoneType;
-  geometry: Geometry;
+  geometry: ZoneGeometry;
 };
