@@ -1,0 +1,19 @@
+import { z } from 'zod';
+
+const pointSchema = z.object({
+  type: z.literal('Point'),
+  coordinates: z.tuple([z.number(), z.number()]),
+});
+
+const polygonSchema = z.object({
+  type: z.literal('Polygon'),
+  coordinates: z.array(z.array(z.tuple([z.number(), z.number()]))).min(1),
+});
+
+export const createZoneSchema = z.object({
+  name: z.string().min(2, 'Nome muito curto'),
+  type: z.enum(['RESIDENCIAL', 'COMERCIAL', 'INDUSTRIAL', 'MISTO']),
+  geometry: z.union([pointSchema, polygonSchema]),
+});
+
+export type CreateZoneFormValues = z.infer<typeof createZoneSchema>;
