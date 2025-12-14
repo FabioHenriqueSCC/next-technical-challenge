@@ -18,6 +18,8 @@ import type { ZoneGeometry } from '../model/zone.geometry';
 import ZoneLegend, { TYPE_COLOR } from './ZoneLegend';
 import DrawModeController, { DrawMode } from './DrawModeController.client';
 
+import './leafletSetup.client';
+
 const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
 const toLatLng = (coord: [number, number]): [number, number] => {
