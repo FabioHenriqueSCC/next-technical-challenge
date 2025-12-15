@@ -51,7 +51,7 @@ describe('ZonesService', () => {
     const dto: CreateZoneDto = {
       name: 'X',
       type: ZoneTypeDto.RESIDENCIAL,
-      geometry: { foo: 'bar' }, // ainda é Record<string, any> no seu DTO
+      geometry: { foo: 'bar' },
     };
 
     await expect(service.create(dto)).rejects.toThrow();
