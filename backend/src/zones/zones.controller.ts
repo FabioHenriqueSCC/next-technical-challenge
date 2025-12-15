@@ -39,6 +39,9 @@ export class ZonesController {
       },
     ],
   })
+  /**
+   * Lists zones optionally filtered by name.
+   */
   list(@Query('name') name?: string) {
     return this.service.list(name);
   }
@@ -98,6 +101,9 @@ export class ZonesController {
       error: 'Bad Request',
     },
   })
+  /**
+   * Creates a new zone.
+   */
   create(@Body() dto: CreateZoneDto) {
     return this.service.create(dto);
   }

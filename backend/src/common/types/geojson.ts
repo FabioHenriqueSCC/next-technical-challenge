@@ -1,3 +1,10 @@
+/**
+ * Minimal GeoJSON types used by this project.
+ *
+ * @remarks
+ * Coordinates follow `[lng, lat]` order.
+ */
+
 export type Position = [number, number];
 
 export type GeoJsonPoint = {

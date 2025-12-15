@@ -7,6 +7,12 @@ import {
   MaxLength,
 } from 'class-validator';
 
+/**
+ * Supported zone types for creation.
+ *
+ * @remarks
+ * This enum mirrors the values persisted in the database.
+ */
 export enum ZoneTypeDto {
   RESIDENCIAL = 'RESIDENCIAL',
   COMERCIAL = 'COMERCIAL',
@@ -15,6 +21,14 @@ export enum ZoneTypeDto {
   ESPECIAL = 'ESPECIAL',
 }
 
+/**
+ * Payload used to create a new Zone.
+ *
+ * @remarks
+ * - `name` is trimmed at service layer.
+ * - `geometry` must be a valid GeoJSON Point or Polygon.
+ * - Coordinates are always in `[lng, lat]` order.
+ */
 export class CreateZoneDto {
   @ApiProperty({
     example: 'Zona Residencial Norte',

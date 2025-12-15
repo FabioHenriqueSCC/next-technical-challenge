@@ -6,6 +6,15 @@ import type { CorsOptions } from 'cors';
 
 import { AppModule } from './app.module';
 
+/**
+ * Application entrypoint.
+ *
+ * @remarks
+ * Configures:
+ * - CORS allowlist (FRONTEND_URL + localhost)
+ * - Global validation pipe
+ * - Swagger docs at /docs
+ */
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableShutdownHooks();

@@ -21,6 +21,11 @@ export class HealthController {
     description: 'Returns OK if the API process is running.',
   })
   @ApiOkResponse({ example: { status: 'ok' } })
+  /**
+   * Liveness probe.
+   *
+   * @returns Basic OK response if the API process is running.
+   */
   health(): HealthResponse {
     return { status: 'ok' };
   }
@@ -39,6 +44,12 @@ export class HealthController {
       error: 'Service Unavailable',
     },
   })
+  /**
+   * Readiness probe.
+   *
+   * @returns OK if the database is reachable.
+   * @throws {ServiceUnavailableException} When the database is not reachable.
+   */
   async ready(): Promise<ReadyResponse> {
     try {
       await this.prisma.$queryRaw`SELECT 1`;

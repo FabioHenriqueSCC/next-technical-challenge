@@ -1,9 +1,26 @@
+/**
+ * Database seed script (development/demo only).
+ *
+ * @remarks
+ * - Inserts deterministic sample zones (Point and Polygon).
+ * - Uses `skipDuplicates` so it can be executed multiple times safely.
+ * - Validates GeoJSON with the same rules used by the API.
+ *
+ * @example
+ * npx prisma db seed
+ */
+
 import 'dotenv/config';
 import { PrismaClient, ZoneType } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { GeoJsonGeometry } from '../src/common/types/geojson';
 import { isValidGeoJson } from '../src/common/utils/geojson';
 
+/**
+ * Creates a PrismaClient instance using the Prisma PostgreSQL adapter.
+ *
+ * @throws {Error} When DATABASE_URL is not configured.
+ */
 function prisma() {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) throw new Error('DATABASE_URL is not set');
@@ -12,6 +29,12 @@ function prisma() {
   return new PrismaClient({ adapter });
 }
 
+/**
+ * Executes the seed routine.
+ *
+ * @remarks
+ * This function validates all geometries before inserting them into the database.
+ */
 async function main() {
   const client = prisma();
 

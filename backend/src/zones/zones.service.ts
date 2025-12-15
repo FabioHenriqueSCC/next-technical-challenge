@@ -8,6 +8,15 @@ import { isValidGeoJson } from '../common/utils/geojson';
 export class ZonesService {
   constructor(private readonly repo: ZonesRepository) {}
 
+  /**
+   * Creates a new Zone.
+   *
+   * @param dto - Zone creation payload.
+   * @returns The created Zone.
+   *
+   * @throws {BadRequestException}
+   * Throws when geometry is not a valid GeoJSON Point or Polygon.
+   */
   async create(dto: CreateZoneDto): Promise<Zone> {
     if (!isValidGeoJson(dto.geometry)) {
       throw new BadRequestException(
@@ -22,6 +31,12 @@ export class ZonesService {
     });
   }
 
+  /**
+   * Lists zones optionally filtered by a name substring.
+   *
+   * @param name - Optional substring filter (case-insensitive).
+   * @returns A list of Zones ordered by newest first.
+   */
   async list(name?: string): Promise<Zone[]> {
     return await this.repo.findMany({
       where: name
