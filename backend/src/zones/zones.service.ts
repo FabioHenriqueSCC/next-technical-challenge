@@ -1,13 +1,22 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Zone } from '@prisma/client';
-import { PrismaService } from '../../prisma/prisma.service';
 import { CreateZoneDto } from './dto/create-zone.dto';
-import { isValidGeoJson } from './geojson';
+import { ZonesRepository } from './zones.repository';
+import { isValidGeoJson } from '../common/utils/geojson';
 
 @Injectable()
 export class ZonesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly repo: ZonesRepository) {}
 
+  /**
+   * Creates a new Zone.
+   *
+   * @param dto - Zone creation payload.
+   * @returns The created Zone.
+   *
+   * @throws {BadRequestException}
+   * Throws when geometry is not a valid GeoJSON Point or Polygon.
+   */
   async create(dto: CreateZoneDto): Promise<Zone> {
     if (!isValidGeoJson(dto.geometry)) {
       throw new BadRequestException(
@@ -15,25 +24,25 @@ export class ZonesService {
       );
     }
 
-    const zone = await this.prisma.zone.create({
-      data: {
-        name: dto.name.trim(),
-        type: dto.type,
-        geometry: dto.geometry,
-      },
+    return await this.repo.create({
+      name: dto.name.trim(),
+      type: dto.type,
+      geometry: dto.geometry,
     });
-
-    return zone;
   }
 
+  /**
+   * Lists zones optionally filtered by a name substring.
+   *
+   * @param name - Optional substring filter (case-insensitive).
+   * @returns A list of Zones ordered by newest first.
+   */
   async list(name?: string): Promise<Zone[]> {
-    const zones = await this.prisma.zone.findMany({
+    return await this.repo.findMany({
       where: name
         ? { name: { contains: name, mode: 'insensitive' } }
         : undefined,
       orderBy: { createdAt: 'desc' },
     });
-
-    return zones;
   }
 }

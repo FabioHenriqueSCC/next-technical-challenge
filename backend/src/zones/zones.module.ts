@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
-import { ZonesService } from './zones.service';
 import { ZonesController } from './zones.controller';
+import { ZonesRepository } from './zones.repository';
+import { ZonesService } from './zones.service';
 
 @Module({
-  providers: [ZonesService],
   controllers: [ZonesController],
+  providers: [ZonesRepository, ZonesService],
 })
 export class ZonesModule {}
