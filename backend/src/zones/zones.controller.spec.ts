@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ZonesController } from './zones.controller';
 import { ZonesService } from './zones.service';
+import { CreateZoneDto, ZoneTypeDto } from './dto/create-zone.dto';
 
 describe('ZonesController', () => {
   let controller: ZonesController;
@@ -40,5 +41,20 @@ describe('ZonesController', () => {
 
     expect(zonesServiceMock.list).toHaveBeenCalledWith('resi');
     expect(res).toHaveLength(1);
+  });
+
+  it('should call service.create', async () => {
+    zonesServiceMock.create.mockResolvedValue({ id: '1' });
+
+    const dto: CreateZoneDto = {
+      name: 'Zona Residencial Norte',
+      type: ZoneTypeDto.RESIDENCIAL,
+      geometry: { type: 'Point', coordinates: [-46.63, -23.55] },
+    };
+
+    const res = await controller.create(dto);
+
+    expect(zonesServiceMock.create).toHaveBeenCalledWith(dto);
+    expect(res).toEqual({ id: '1' });
   });
 });

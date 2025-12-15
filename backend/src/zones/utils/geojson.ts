@@ -29,13 +29,26 @@ function isPosition(value: unknown): value is Position {
   );
 }
 
+function isClosedRing(ring: Position[]): boolean {
+  if (ring.length < 4) return false;
+
+  const first = ring[0];
+  const last = ring[ring.length - 1];
+
+  return first[0] === last[0] && first[1] === last[1];
+}
+
 function isPolygonCoordinates(value: unknown): value is Position[][] {
-  return (
-    Array.isArray(value) &&
-    value.every(
-      (ring) => Array.isArray(ring) && ring.every((pos) => isPosition(pos)),
-    )
-  );
+  if (!Array.isArray(value)) return false;
+
+  return value.every((ring) => {
+    if (!Array.isArray(ring)) return false;
+
+    const positions = ring as unknown[];
+    if (!positions.every((pos) => isPosition(pos))) return false;
+
+    return isClosedRing(positions);
+  });
 }
 
 /**
