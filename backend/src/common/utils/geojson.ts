@@ -1,16 +1,4 @@
-type Position = [number, number];
-
-export type GeoJsonPoint = {
-  type: 'Point';
-  coordinates: Position;
-};
-
-export type GeoJsonPolygon = {
-  type: 'Polygon';
-  coordinates: Position[][];
-};
-
-export type GeoJsonGeometry = GeoJsonPoint | GeoJsonPolygon;
+import type { GeoJsonGeometry, Position } from '../types/geojson';
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -52,8 +40,8 @@ function isPolygonCoordinates(value: unknown): value is Position[][] {
 }
 
 /**
- * Validates a minimal subset of GeoJSON geometry supported by the challenge:
- * Point and Polygon.
+ * Validates a minimal subset of GeoJSON geometry supported by this project:
+ * Point and Polygon (closed ring, at least 4 positions).
  */
 export function isValidGeoJson(geometry: unknown): geometry is GeoJsonGeometry {
   if (!isObjectRecord(geometry)) return false;
@@ -61,13 +49,8 @@ export function isValidGeoJson(geometry: unknown): geometry is GeoJsonGeometry {
   const type = geometry.type;
   const coordinates = geometry.coordinates;
 
-  if (type === 'Point') {
-    return isPosition(coordinates);
-  }
-
-  if (type === 'Polygon') {
-    return isPolygonCoordinates(coordinates);
-  }
+  if (type === 'Point') return isPosition(coordinates);
+  if (type === 'Polygon') return isPolygonCoordinates(coordinates);
 
   return false;
 }

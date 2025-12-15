@@ -1,20 +1,8 @@
 import 'dotenv/config';
 import { PrismaClient, ZoneType } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-
-type Position = [number, number];
-
-type GeoJsonPoint = {
-  type: 'Point';
-  coordinates: Position;
-};
-
-type GeoJsonPolygon = {
-  type: 'Polygon';
-  coordinates: Position[][];
-};
-
-type GeoJsonGeometry = GeoJsonPoint | GeoJsonPolygon;
+import { GeoJsonGeometry } from '../src/common/types/geojson';
+import { isValidGeoJson } from '../src/common/utils/geojson';
 
 function prisma() {
   const connectionString = process.env.DATABASE_URL;
@@ -57,6 +45,12 @@ async function main() {
       },
     },
   ];
+
+  for (const z of zones) {
+    if (!isValidGeoJson(z.geometry)) {
+      throw new Error(`Invalid GeoJSON in seed for zone: ${z.name}`);
+    }
+  }
 
   await client.zone.createMany({
     data: zones,

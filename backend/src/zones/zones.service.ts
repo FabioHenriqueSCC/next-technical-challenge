@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Zone } from '@prisma/client';
 import { CreateZoneDto } from './dto/create-zone.dto';
-import { isValidGeoJson } from './utils/geojson';
 import { ZonesRepository } from './zones.repository';
+import { isValidGeoJson } from '../common/utils/geojson';
 
 @Injectable()
 export class ZonesService {
