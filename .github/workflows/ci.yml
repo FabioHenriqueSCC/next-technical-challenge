@@ -2,15 +2,26 @@ name: CI
 
 on:
   pull_request:
+    branches:
+      - main
+      - dev
   push:
     branches:
       - main
       - dev
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   check:
     name: Check (format, lint, test, build)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     services:
       postgres:
