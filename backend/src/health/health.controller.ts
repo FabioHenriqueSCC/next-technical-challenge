@@ -1,6 +1,14 @@
-import { Controller, Get } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
+import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiServiceUnavailableResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { PrismaService } from '../prisma/prisma.service';
+
+type HealthResponse = { status: 'ok' };
+type ReadyResponse = { status: 'ok'; db: 'ok' };
 
 @ApiTags('health')
 @Controller()
@@ -13,18 +21,30 @@ export class HealthController {
     description: 'Returns OK if the API process is running.',
   })
   @ApiOkResponse({ example: { status: 'ok' } })
-  health() {
+  health(): HealthResponse {
     return { status: 'ok' };
   }
 
   @Get('ready')
   @ApiOperation({
     summary: 'Readiness probe',
-    description: 'Returns OK if API can access the database.',
+    description: 'Returns OK if the API can access the database.',
   })
   @ApiOkResponse({ example: { status: 'ok', db: 'ok' } })
-  async ready() {
-    await this.prisma.$queryRaw`SELECT 1`;
-    return { status: 'ok', db: 'ok' };
+  @ApiServiceUnavailableResponse({
+    description: 'Database is not reachable',
+    example: {
+      statusCode: 503,
+      message: 'Database is not reachable',
+      error: 'Service Unavailable',
+    },
+  })
+  async ready(): Promise<ReadyResponse> {
+    try {
+      await this.prisma.$queryRaw`SELECT 1`;
+      return { status: 'ok', db: 'ok' };
+    } catch {
+      throw new ServiceUnavailableException('Database is not reachable');
+    }
   }
 }
