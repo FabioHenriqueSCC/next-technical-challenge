@@ -4,20 +4,11 @@ import L from 'leaflet';
 import 'leaflet-draw';
 import { useEffect, useRef } from 'react';
 import { useMap } from 'react-leaflet';
-import type { ZoneGeometry } from '../model/zone.geometry';
+
+import type { ZoneGeometry } from '../../model/zone.geometry';
+import { ensureClosedRing, toLeafletLatLng, toLngLat } from './map.utils';
 
 export type DrawMode = 'NONE' | 'POINT' | 'POLYGON';
-
-const toLngLat = (ll: L.LatLng): [number, number] => [ll.lng, ll.lat];
-const toLatLng = ([lng, lat]: [number, number]) => L.latLng(lat, lng);
-
-function ensureClosedRing(coords: [number, number][]): [number, number][] {
-  if (coords.length < 3) return coords;
-  const first = coords[0];
-  const last = coords[coords.length - 1];
-  if (first[0] === last[0] && first[1] === last[1]) return coords;
-  return [...coords, first];
-}
 
 function layerToGeometry(layer: L.Layer): ZoneGeometry | null {
   if (layer instanceof L.Marker) {
@@ -37,9 +28,10 @@ function layerToGeometry(layer: L.Layer): ZoneGeometry | null {
 
 function geometryToLayer(geometry: ZoneGeometry): L.Layer {
   if (geometry.type === 'Point') {
-    return L.marker(toLatLng(geometry.coordinates));
+    return L.marker(toLeafletLatLng(geometry.coordinates));
   }
-  const ring = geometry.coordinates[0].map(toLatLng);
+
+  const ring = geometry.coordinates[0].map(toLeafletLatLng);
   return L.polygon(ring);
 }
 
@@ -125,7 +117,6 @@ export default function DrawModeController({
     if (!fg) return;
 
     fg.clearLayers();
-
     if (!draftGeometry) return;
 
     fg.addLayer(geometryToLayer(draftGeometry));

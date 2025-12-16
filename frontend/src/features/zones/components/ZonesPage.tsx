@@ -6,15 +6,19 @@ import {
   useDisclosure,
   useMediaQuery,
 } from '@mantine/hooks';
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useZones } from '../hooks/useZones';
-import ZonesSidebarContent from './ZonesSidebarContent';
+import ZonesSidebarContent from './sidebar/ZonesSidebarContent';
 import type { ZoneGeometry } from '../model/zone.geometry';
-import MapView from './MapView.client';
-import type { DrawMode } from './DrawModeController.client';
+import MapView from './map/MapView.client';
+import type { DrawMode } from './map/DrawModeController.client';
 
 import { BrandLogo } from '@/src/shared/components/BrandLogo';
+
+function raf2(cb: () => void) {
+  requestAnimationFrame(() => requestAnimationFrame(cb));
+}
 
 export default function ZonesPage() {
   const isMobile = useMediaQuery('(max-width: 48em)');
@@ -34,24 +38,38 @@ export default function ZonesPage() {
   const zonesQuery = useZones(filterDebounced);
   const zones = useMemo(() => zonesQuery.data ?? [], [zonesQuery.data]);
 
-  const clearDraft = () => {
+  const headerHeight = 56;
+
+  const clearDraft = useCallback(() => {
     clearDraftRef.current?.();
     setDraftGeometry(null);
     setDrawMode('NONE');
-  };
+  }, []);
 
-  const goToMap = () => {
+  const goToMap = useCallback(() => {
     if (isMobile) drawer.close();
-  };
+  }, [drawer, isMobile]);
 
-  const focusGeometry = (g: ZoneGeometry) => {
-    if (isMobile) {
-      drawer.close();
-      setTimeout(() => flyToGeometryRef.current?.(g), 50);
-      return;
-    }
-    flyToGeometryRef.current?.(g);
-  };
+  const focusGeometry = useCallback(
+    (g: ZoneGeometry) => {
+      if (isMobile) {
+        drawer.close();
+        raf2(() => flyToGeometryRef.current?.(g));
+        return;
+      }
+
+      flyToGeometryRef.current?.(g);
+    },
+    [drawer, isMobile],
+  );
+
+  const handleSelectZone = useCallback(
+    (id: string | null) => {
+      setSelectedZoneId(id);
+      if (isMobile) drawer.close();
+    },
+    [drawer, isMobile],
+  );
 
   const sidebar = (
     <ZonesSidebarContent
@@ -61,10 +79,7 @@ export default function ZonesPage() {
       isLoading={zonesQuery.isLoading}
       isError={zonesQuery.isError}
       selectedZoneId={selectedZoneId}
-      onSelectZone={(id: string | null) => {
-        setSelectedZoneId(id);
-        if (isMobile) drawer.close();
-      }}
+      onSelectZone={handleSelectZone}
       draftGeometry={draftGeometry}
       onDraftGeometryChange={setDraftGeometry}
       drawMode={drawMode}
@@ -74,8 +89,6 @@ export default function ZonesPage() {
       onFocusGeometry={focusGeometry}
     />
   );
-
-  const headerHeight = 56;
 
   return (
     <AppShell

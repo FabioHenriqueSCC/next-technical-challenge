@@ -1,7 +1,7 @@
 'use client';
 
 import { Alert, Loader, Table } from '@mantine/core';
-import type { Zone } from '../model/zone.types';
+import type { Zone } from '../../model/zone.types';
 
 export default function ZonesTable({
   zones,

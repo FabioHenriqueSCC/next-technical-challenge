@@ -13,9 +13,9 @@ import { IconX } from '@tabler/icons-react';
 
 import ZonesTable from './ZonesTable';
 import ZoneForm from './ZoneForm';
-import type { Zone } from '../model/zone.types';
-import type { ZoneGeometry } from '../model/zone.geometry';
-import type { DrawMode } from './DrawModeController.client';
+import type { Zone } from '../../model/zone.types';
+import type { ZoneGeometry } from '../../model/zone.geometry';
+import type { DrawMode } from '../map/DrawModeController.client';
 
 export default function ZonesSidebarContent({
   filterInput,
