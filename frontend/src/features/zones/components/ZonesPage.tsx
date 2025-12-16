@@ -1,14 +1,6 @@
 'use client';
 
-import {
-  AppShell,
-  Burger,
-  Group,
-  Text,
-  Drawer,
-  ActionIcon,
-  Tooltip,
-} from '@mantine/core';
+import { AppShell, Burger, Drawer, Group, ScrollArea } from '@mantine/core';
 import {
   useDebouncedValue,
   useDisclosure,
@@ -21,6 +13,8 @@ import ZonesSidebarContent from './ZonesSidebarContent';
 import type { ZoneGeometry } from '../model/zone.geometry';
 import MapView from './MapView.client';
 import type { DrawMode } from './DrawModeController.client';
+
+import { BrandLogo } from '@/src/shared/components/BrandLogo';
 
 export default function ZonesPage() {
   const isMobile = useMediaQuery('(max-width: 48em)');
@@ -35,6 +29,7 @@ export default function ZonesPage() {
   const [drawMode, setDrawMode] = useState<DrawMode>('NONE');
 
   const clearDraftRef = useRef<(() => void) | null>(null);
+  const flyToGeometryRef = useRef<((g: ZoneGeometry) => void) | null>(null);
 
   const zonesQuery = useZones(filterDebounced);
   const zones = useMemo(() => zonesQuery.data ?? [], [zonesQuery.data]);
@@ -43,6 +38,19 @@ export default function ZonesPage() {
     clearDraftRef.current?.();
     setDraftGeometry(null);
     setDrawMode('NONE');
+  };
+
+  const goToMap = () => {
+    if (isMobile) drawer.close();
+  };
+
+  const focusGeometry = (g: ZoneGeometry) => {
+    if (isMobile) {
+      drawer.close();
+      setTimeout(() => flyToGeometryRef.current?.(g), 50);
+      return;
+    }
+    flyToGeometryRef.current?.(g);
   };
 
   const sidebar = (
@@ -62,18 +70,27 @@ export default function ZonesPage() {
       drawMode={drawMode}
       onDrawModeChange={setDrawMode}
       onClearDraft={clearDraft}
+      onGoToMap={goToMap}
+      onFocusGeometry={focusGeometry}
     />
   );
 
+  const headerHeight = 56;
+
   return (
     <AppShell
-      header={{ height: 56 }}
+      header={{ height: headerHeight }}
       navbar={isMobile ? undefined : { width: 420, breakpoint: 'md' }}
       padding="md"
     >
       <AppShell.Header>
-        <Group h="100%" px="md" justify="space-between">
-          <Group gap="sm">
+        <Group h="100%" px={0} justify="space-between" wrap="nowrap">
+          <Group
+            gap={12}
+            align="center"
+            wrap="nowrap"
+            style={{ paddingLeft: 12 }}
+          >
             {isMobile ? (
               <Burger
                 opened={drawerOpened}
@@ -81,26 +98,23 @@ export default function ZonesPage() {
                 aria-label="Abrir menu"
               />
             ) : null}
-            <Text fw={700}>Zones</Text>
-          </Group>
 
-          <Tooltip label="Limpar seleção">
-            <ActionIcon
-              variant="light"
-              onClick={() => setSelectedZoneId(null)}
-              aria-label="Limpar seleção"
-            >
-              ✕
-            </ActionIcon>
-          </Tooltip>
+            <BrandLogo height={isMobile ? 32 : 48} />
+          </Group>
         </Group>
       </AppShell.Header>
 
-      {!isMobile ? <AppShell.Navbar p="md">{sidebar}</AppShell.Navbar> : null}
+      {!isMobile ? (
+        <AppShell.Navbar p={0}>
+          <ScrollArea h={`calc(100dvh - ${headerHeight}px)`} px="md" py="md">
+            {sidebar}
+          </ScrollArea>
+        </AppShell.Navbar>
+      ) : null}
 
       <AppShell.Main
         style={{
-          height: 'calc(100dvh - 56px)',
+          height: `calc(100dvh - ${headerHeight}px)`,
           display: 'flex',
           flexDirection: 'column',
           minHeight: 0,
@@ -126,6 +140,9 @@ export default function ZonesPage() {
             onRegisterClearDraft={(fn) => {
               clearDraftRef.current = fn;
             }}
+            onRegisterFlyToGeometry={(fn) => {
+              flyToGeometryRef.current = fn;
+            }}
           />
         </div>
       </AppShell.Main>
@@ -135,11 +152,20 @@ export default function ZonesPage() {
         onClose={drawer.close}
         title="Zonas"
         size="92%"
-        padding="md"
+        padding={0}
         hiddenFrom="md"
         zIndex={4000}
+        styles={{
+          body: {
+            height: `calc(100dvh - ${headerHeight}px)`,
+            overflow: 'hidden',
+            padding: 0,
+          },
+        }}
       >
-        {sidebar}
+        <ScrollArea h="100%" px="md" py="md">
+          {sidebar}
+        </ScrollArea>
       </Drawer>
     </AppShell>
   );

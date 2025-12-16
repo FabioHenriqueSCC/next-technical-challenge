@@ -1,6 +1,16 @@
 'use client';
 
-import { Tabs, TextInput, Text, Stack, Divider } from '@mantine/core';
+import {
+  Tabs,
+  TextInput,
+  Text,
+  Stack,
+  Divider,
+  Group,
+  ActionIcon,
+} from '@mantine/core';
+import { IconX } from '@tabler/icons-react';
+
 import ZonesTable from './ZonesTable';
 import ZoneForm from './ZoneForm';
 import type { Zone } from '../model/zone.types';
@@ -20,6 +30,8 @@ export default function ZonesSidebarContent({
   drawMode,
   onDrawModeChange,
   onClearDraft,
+  onGoToMap,
+  onFocusGeometry,
 }: {
   filterInput: string;
   onFilterInputChange: (v: string) => void;
@@ -38,16 +50,14 @@ export default function ZonesSidebarContent({
   onDrawModeChange: (m: DrawMode) => void;
 
   onClearDraft: () => void;
+
+  onGoToMap?: () => void;
+  onFocusGeometry?: (g: ZoneGeometry) => void;
 }) {
+  const hasFilter = filterInput.trim().length > 0;
+
   return (
     <Stack gap="md" style={{ height: '100%' }}>
-      <TextInput
-        label="Filtrar por nome"
-        placeholder="Ex: Zona Residencial Norte"
-        value={filterInput}
-        onChange={(e) => onFilterInputChange(e.currentTarget.value)}
-      />
-
       <Tabs defaultValue="list">
         <Tabs.List>
           <Tabs.Tab value="list">Zonas</Tabs.Tab>
@@ -56,9 +66,36 @@ export default function ZonesSidebarContent({
 
         <Tabs.Panel value="list" pt="sm">
           <Stack gap="sm">
-            <Text size="sm" c="dimmed">
-              {zones.length} zona(s)
-            </Text>
+            <TextInput
+              label="Buscar zona"
+              placeholder="Digite o nome…"
+              value={filterInput}
+              onChange={(e) => onFilterInputChange(e.currentTarget.value)}
+              rightSection={
+                hasFilter ? (
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    aria-label="Limpar busca"
+                    onClick={() => onFilterInputChange('')}
+                  >
+                    <IconX size={16} />
+                  </ActionIcon>
+                ) : null
+              }
+            />
+
+            <Group justify="space-between" align="center">
+              <Text size="sm" c="dimmed">
+                {zones.length} zona(s)
+              </Text>
+
+              {hasFilter ? (
+                <Text size="sm" c="dimmed">
+                  Filtrando por: <b>{filterInput}</b>
+                </Text>
+              ) : null}
+            </Group>
 
             <ZonesTable
               zones={zones}
@@ -78,6 +115,8 @@ export default function ZonesSidebarContent({
             drawMode={drawMode}
             onDrawModeChange={onDrawModeChange}
             onClearDraft={onClearDraft}
+            onGoToMap={onGoToMap}
+            onFocusGeometry={onFocusGeometry}
           />
         </Tabs.Panel>
       </Tabs>

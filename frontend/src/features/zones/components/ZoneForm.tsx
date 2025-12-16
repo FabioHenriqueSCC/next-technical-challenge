@@ -1,14 +1,17 @@
 'use client';
 
 import {
+  Accordion,
+  Alert,
   Button,
   Group,
+  NumberInput,
+  SegmentedControl,
   Select,
   Stack,
   Text,
   TextInput,
   Textarea,
-  Alert,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useEffect, useMemo, useState } from 'react';
@@ -17,7 +20,6 @@ import axios from 'axios';
 import type { ZoneGeometry } from '../model/zone.geometry';
 import type { ZoneType } from '../model/zone.types';
 import type { DrawMode } from './DrawModeController.client';
-
 import { useCreateZone } from '../hooks/useCreateZone';
 
 type CreateZoneDTO = {
@@ -31,6 +33,8 @@ type CreateZoneFormValues = {
   type: ZoneType;
   geometry: ZoneGeometry | null;
 };
+
+type GeometryMode = 'DRAW' | 'POINT_MANUAL' | 'GEOJSON';
 
 const ZONE_TYPES: ZoneType[] = [
   'RESIDENCIAL',
@@ -104,6 +108,8 @@ export default function ZoneForm({
   drawMode,
   onDrawModeChange,
   onClearDraft,
+  onGoToMap,
+  onFocusGeometry,
 }: {
   draftGeometry: ZoneGeometry | null;
   onDraftGeometryChange: (g: ZoneGeometry | null) => void;
@@ -112,8 +118,13 @@ export default function ZoneForm({
   onDrawModeChange: (m: DrawMode) => void;
 
   onClearDraft: () => void;
+
+  onGoToMap?: () => void;
+  onFocusGeometry?: (g: ZoneGeometry) => void;
 }) {
   const createZoneMutation = useCreateZone();
+
+  const [geometryMode, setGeometryMode] = useState<GeometryMode>('DRAW');
 
   const [geometryText, setGeometryText] = useState<string>(
     geometryToPrettyJson(draftGeometry),
@@ -121,6 +132,9 @@ export default function ZoneForm({
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+
+  const [lat, setLat] = useState<number | string>('');
+  const [lng, setLng] = useState<number | string>('');
 
   const form = useForm<CreateZoneFormValues>({
     initialValues: {
@@ -133,7 +147,7 @@ export default function ZoneForm({
         v.trim().length < 2 ? 'Nome deve ter pelo menos 2 caracteres' : null,
       type: (v) => (ZONE_TYPES.includes(v) ? null : 'Tipo inválido'),
       geometry: (g) =>
-        g ? null : 'Informe a geometria (cole GeoJSON ou desenhe no mapa)',
+        g ? null : 'Informe a geometria (desenhe no mapa ou informe um ponto).',
     },
   });
 
@@ -141,32 +155,24 @@ export default function ZoneForm({
     form.setFieldValue('geometry', draftGeometry);
     setGeometryText(geometryToPrettyJson(draftGeometry));
     setJsonError(null);
+
+    if (draftGeometry?.type === 'Point') {
+      const [lng0, lat0] = draftGeometry.coordinates;
+      setLat(lat0);
+      setLng(lng0);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftGeometry]);
+
+  useEffect(() => {
+    if (geometryMode !== 'DRAW') onDrawModeChange('NONE');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geometryMode]);
 
   const typeSelectData = useMemo(
     () => ZONE_TYPES.map((t) => ({ value: t, label: t })),
     [],
   );
-
-  const examplePoint: ZoneGeometry = {
-    type: 'Point',
-    coordinates: [-46.6402, -23.5599],
-  };
-
-  const examplePolygon: ZoneGeometry = {
-    type: 'Polygon',
-    coordinates: [
-      [
-        [-46.65, -23.56],
-        [-46.635, -23.565],
-        [-46.625, -23.555],
-        [-46.635, -23.545],
-        [-46.65, -23.55],
-        [-46.65, -23.56],
-      ],
-    ],
-  };
 
   const onApplyGeometryText = () => {
     setSubmitError(null);
@@ -181,10 +187,31 @@ export default function ZoneForm({
         return;
       }
       setJsonError(null);
+
       onDraftGeometryChange(g);
+
+      onGoToMap?.();
+
+      onFocusGeometry?.(g);
     } catch {
       setJsonError('JSON inválido (erro ao parsear).');
     }
+  };
+
+  const onApplyPointManual = () => {
+    setSubmitError(null);
+    setSubmitSuccess(null);
+
+    if (typeof lat !== 'number' || typeof lng !== 'number') {
+      form.setFieldError('geometry', 'Informe latitude e longitude.');
+      return;
+    }
+
+    const g: ZoneGeometry = { type: 'Point', coordinates: [lng, lat] };
+    onDraftGeometryChange(g);
+
+    onGoToMap?.();
+    onFocusGeometry?.(g);
   };
 
   const onSubmit = async (values: CreateZoneFormValues) => {
@@ -211,6 +238,9 @@ export default function ZoneForm({
       onDrawModeChange('NONE');
       setGeometryText('');
       setJsonError(null);
+      setLat('');
+      setLng('');
+      setGeometryMode('DRAW');
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         const msg =
@@ -220,7 +250,6 @@ export default function ZoneForm({
         setSubmitError(msg);
         return;
       }
-
       setSubmitError('Erro ao criar zona.');
     }
   };
@@ -250,48 +279,9 @@ export default function ZoneForm({
           comboboxProps={{ withinPortal: false }}
         />
 
-        <Group grow>
-          <Button
-            type="button"
-            variant={drawMode === 'POINT' ? 'filled' : 'light'}
-            onClick={() =>
-              onDrawModeChange(drawMode === 'POINT' ? 'NONE' : 'POINT')
-            }
-          >
-            Desenhar ponto
-          </Button>
-
-          <Button
-            type="button"
-            variant={drawMode === 'POLYGON' ? 'filled' : 'light'}
-            onClick={() =>
-              onDrawModeChange(drawMode === 'POLYGON' ? 'NONE' : 'POLYGON')
-            }
-          >
-            Desenhar polígono
-          </Button>
-        </Group>
-
-        <Group grow>
-          <Button
-            variant="light"
-            type="button"
-            onClick={() => onDraftGeometryChange(examplePoint)}
-          >
-            Exemplo ponto
-          </Button>
-          <Button
-            variant="light"
-            type="button"
-            onClick={() => onDraftGeometryChange(examplePolygon)}
-          >
-            Exemplo polígono
-          </Button>
-        </Group>
-
         <Group justify="space-between" align="center">
           <Text fw={600} size="sm">
-            Geometria (GeoJSON Geometry)
+            Geometria
           </Text>
 
           <Button
@@ -305,6 +295,9 @@ export default function ZoneForm({
               setJsonError(null);
               setSubmitError(null);
               setSubmitSuccess(null);
+              setLat('');
+              setLng('');
+              setGeometryMode('DRAW');
               onDrawModeChange('NONE');
             }}
           >
@@ -312,25 +305,110 @@ export default function ZoneForm({
           </Button>
         </Group>
 
-        <Text size="xs" c="dimmed">
-          Cole um Geometry (Point/Polygon) ou use os botões para desenhar no
-          mapa. O formato aceito é GeoJSON com coordenadas [lng, lat].
-        </Text>
-
-        {jsonError ? <Alert color="red">{jsonError}</Alert> : null}
-
-        <Textarea
-          value={geometryText}
-          onChange={(e) => setGeometryText(e.currentTarget.value)}
-          minRows={6}
-          autosize
+        <SegmentedControl
+          fullWidth
+          value={geometryMode}
+          onChange={(v) => setGeometryMode(v as GeometryMode)}
+          data={[
+            { label: 'Desenhar', value: 'DRAW' },
+            { label: 'Ponto manual', value: 'POINT_MANUAL' },
+            { label: 'GeoJSON (avançado)', value: 'GEOJSON' },
+          ]}
         />
 
-        <Group>
-          <Button type="button" variant="light" onClick={onApplyGeometryText}>
-            Aplicar GeoJSON no mapa
-          </Button>
-        </Group>
+        {geometryMode === 'DRAW' ? (
+          <Group grow>
+            <Button
+              type="button"
+              variant={drawMode === 'POINT' ? 'filled' : 'light'}
+              onClick={() => {
+                onDrawModeChange(drawMode === 'POINT' ? 'NONE' : 'POINT');
+                onGoToMap?.();
+              }}
+            >
+              Desenhar ponto
+            </Button>
+
+            <Button
+              type="button"
+              variant={drawMode === 'POLYGON' ? 'filled' : 'light'}
+              onClick={() => {
+                onDrawModeChange(drawMode === 'POLYGON' ? 'NONE' : 'POLYGON');
+                onGoToMap?.();
+              }}
+            >
+              Desenhar polígono
+            </Button>
+          </Group>
+        ) : null}
+
+        {geometryMode === 'POINT_MANUAL' ? (
+          <Stack gap="xs">
+            <Group grow>
+              <NumberInput
+                label="Latitude"
+                placeholder="-23.5599"
+                value={lat}
+                onChange={setLat}
+                decimalScale={7}
+              />
+              <NumberInput
+                label="Longitude"
+                placeholder="-46.6402"
+                value={lng}
+                onChange={setLng}
+                decimalScale={7}
+              />
+            </Group>
+
+            <Button type="button" variant="light" onClick={onApplyPointManual}>
+              Aplicar ponto no mapa
+            </Button>
+
+            <Text size="xs" c="dimmed">
+              O sistema salva como GeoJSON [lng, lat].
+            </Text>
+          </Stack>
+        ) : null}
+
+        {geometryMode === 'GEOJSON' ? (
+          <Accordion variant="separated">
+            <Accordion.Item value="geojson">
+              <Accordion.Control>Importar GeoJSON</Accordion.Control>
+              <Accordion.Panel>
+                <Text size="xs" c="dimmed" mb="xs">
+                  Aceito: GeoJSON Geometry (Point/Polygon) com coordenadas [lng,
+                  lat].
+                </Text>
+
+                {jsonError ? <Alert color="red">{jsonError}</Alert> : null}
+
+                <Textarea
+                  value={geometryText}
+                  onChange={(e) => setGeometryText(e.currentTarget.value)}
+                  autosize={false}
+                  minRows={12}
+                  styles={{
+                    input: {
+                      height: 'clamp(320px, 48vh, 760px)',
+                      overflowY: 'auto',
+                    },
+                  }}
+                />
+
+                <Group mt="sm">
+                  <Button
+                    type="button"
+                    variant="light"
+                    onClick={onApplyGeometryText}
+                  >
+                    Aplicar GeoJSON no mapa
+                  </Button>
+                </Group>
+              </Accordion.Panel>
+            </Accordion.Item>
+          </Accordion>
+        ) : null}
 
         {form.errors.geometry ? (
           <Text size="xs" c="red">
