@@ -3,13 +3,17 @@
 import Image from 'next/image';
 import { useComputedColorScheme } from '@mantine/core';
 
+type BrandLogoProps = {
+  variant?: 'horizontal' | 'mark';
+  height?: number;
+};
+
+const HORIZONTAL_RATIO = 5;
+
 export function BrandLogo({
   variant = 'horizontal',
   height = 25,
-}: {
-  variant?: 'horizontal' | 'mark';
-  height?: number;
-}) {
+}: BrandLogoProps) {
   const scheme = useComputedColorScheme('light');
   const isDark = scheme === 'dark';
 
@@ -22,7 +26,8 @@ export function BrandLogo({
         ? '/zoneatlas-logo-white.svg'
         : '/zoneatlas-logo.svg';
 
-  const width = variant === 'mark' ? height : Math.round(height * 5);
+  const width =
+    variant === 'mark' ? height : Math.round(height * HORIZONTAL_RATIO);
 
   return (
     <Image
@@ -32,6 +37,7 @@ export function BrandLogo({
       height={height}
       priority
       draggable={false}
+      sizes={variant === 'mark' ? `${height}px` : `${width}px`}
       style={{
         width,
         height,

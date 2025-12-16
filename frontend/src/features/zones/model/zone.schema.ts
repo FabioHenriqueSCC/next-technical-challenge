@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ZONE_TYPES } from './zone.types';
 
 const lngLatSchema = z.tuple([z.number(), z.number()]);
 
@@ -14,7 +15,7 @@ const polygonSchema = z.object({
 
 export const createZoneSchema = z.object({
   name: z.string().min(2, 'Nome muito curto'),
-  type: z.enum(['RESIDENCIAL', 'COMERCIAL', 'INDUSTRIAL', 'MISTO', 'ESPECIAL']),
+  type: z.enum(ZONE_TYPES),
   geometry: z.union([pointSchema, polygonSchema]),
 });
 

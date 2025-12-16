@@ -18,7 +18,7 @@ import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 
 import type { ZoneGeometry } from '../model/zone.geometry';
-import type { ZoneType } from '../model/zone.types';
+import { ZONE_TYPES, type ZoneType } from '../model/zone.types';
 import type { DrawMode } from './DrawModeController.client';
 import { useCreateZone } from '../hooks/useCreateZone';
 
@@ -35,14 +35,6 @@ type CreateZoneFormValues = {
 };
 
 type GeometryMode = 'DRAW' | 'POINT_MANUAL' | 'GEOJSON';
-
-const ZONE_TYPES: ZoneType[] = [
-  'RESIDENCIAL',
-  'COMERCIAL',
-  'INDUSTRIAL',
-  'MISTO',
-  'ESPECIAL',
-];
 
 function parseGeometryJson(input: string): ZoneGeometry | null {
   const trimmed = input.trim();

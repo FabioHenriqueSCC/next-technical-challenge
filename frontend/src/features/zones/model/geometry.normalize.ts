@@ -3,8 +3,10 @@ import type { LngLat, ZoneGeometry } from './zone.geometry';
 
 function toLngLat(pos: Position): LngLat | null {
   if (!Array.isArray(pos) || pos.length < 2) return null;
+
   const lng = pos[0];
   const lat = pos[1];
+
   if (typeof lng !== 'number' || typeof lat !== 'number') return null;
   return [lng, lat];
 }
@@ -22,11 +24,13 @@ export function normalizeToZoneGeometry(g: Geometry): ZoneGeometry | null {
 
     for (const ring of rings) {
       const ringOut: LngLat[] = [];
+
       for (const pos of ring) {
         const ll = toLngLat(pos);
         if (!ll) return null;
         ringOut.push(ll);
       }
+
       out.push(ringOut);
     }
 

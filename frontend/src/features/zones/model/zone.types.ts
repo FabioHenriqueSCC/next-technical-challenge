@@ -1,11 +1,14 @@
 import type { ZoneGeometry } from './zone.geometry';
 
-export type ZoneType =
-  | 'RESIDENCIAL'
-  | 'COMERCIAL'
-  | 'INDUSTRIAL'
-  | 'MISTO'
-  | 'ESPECIAL';
+export const ZONE_TYPES = [
+  'RESIDENCIAL',
+  'COMERCIAL',
+  'INDUSTRIAL',
+  'MISTO',
+  'ESPECIAL',
+] as const;
+
+export type ZoneType = (typeof ZONE_TYPES)[number];
 
 export type Zone = {
   id: string;
