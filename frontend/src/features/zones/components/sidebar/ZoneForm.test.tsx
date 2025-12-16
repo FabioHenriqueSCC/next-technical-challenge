@@ -1,6 +1,7 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { renderWithProviders } from '@/test/test-utils';
 import ZoneForm from './ZoneForm';
 import type { ZoneGeometry } from '../../model/zone.geometry';
 
@@ -23,7 +24,7 @@ describe('ZoneForm', () => {
   it('blocks submit when geometry is missing', async () => {
     const user = userEvent.setup();
 
-    render(
+    renderWithProviders(
       <ZoneForm
         draftGeometry={null}
         onDraftGeometryChange={jest.fn()}
@@ -45,7 +46,7 @@ describe('ZoneForm', () => {
     const user = userEvent.setup();
     const onDraftGeometryChange = jest.fn();
 
-    render(
+    renderWithProviders(
       <ZoneForm
         draftGeometry={null}
         onDraftGeometryChange={onDraftGeometryChange}
@@ -77,7 +78,7 @@ describe('ZoneForm', () => {
       coordinates: [-46.64, -23.55],
     };
 
-    render(
+    renderWithProviders(
       <ZoneForm
         draftGeometry={draft}
         onDraftGeometryChange={jest.fn()}

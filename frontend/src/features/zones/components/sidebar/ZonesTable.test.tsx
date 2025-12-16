@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { renderWithProviders } from '@/test/test-utils';
 import ZonesTable from './ZonesTable';
 import type { Zone } from '../../model/zone.types';
 
@@ -17,7 +18,7 @@ function makeZone(overrides: Partial<Zone> = {}): Zone {
 
 describe('ZonesTable', () => {
   it('shows loader when loading', () => {
-    const { container } = render(
+    const { container } = renderWithProviders(
       <ZonesTable
         zones={[]}
         isLoading
@@ -31,7 +32,7 @@ describe('ZonesTable', () => {
   });
 
   it('shows error state', () => {
-    render(
+    renderWithProviders(
       <ZonesTable
         zones={[]}
         isLoading={false}
@@ -40,6 +41,7 @@ describe('ZonesTable', () => {
         onSelectZone={() => {}}
       />,
     );
+
     expect(screen.getByText(/Erro ao carregar zonas/i)).toBeInTheDocument();
   });
 
@@ -52,7 +54,7 @@ describe('ZonesTable', () => {
       makeZone({ id: '2', name: 'Zona B', type: 'COMERCIAL' }),
     ];
 
-    const { rerender } = render(
+    const { rerender } = renderWithProviders(
       <ZonesTable
         zones={zones}
         isLoading={false}
