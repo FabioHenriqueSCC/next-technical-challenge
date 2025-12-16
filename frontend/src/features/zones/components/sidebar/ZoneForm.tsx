@@ -33,6 +33,20 @@ import {
 
 type GeometryMode = 'DRAW' | 'POINT_MANUAL' | 'GEOJSON';
 
+/**
+ * Parses a JSON string into a `ZoneGeometry` supported by the UI.
+ *
+ * Supported:
+ * - `Point` with `[lng, lat]`
+ * - `Polygon` with coordinates as `[[[lng, lat], ...]]` (reads the first ring only)
+ *
+ * Notes:
+ * - Returns `null` if the object shape is not recognized.
+ * - Throws if the input is not valid JSON (caller handles the try/catch).
+ *
+ * @param input - Raw JSON text.
+ * @returns Parsed `ZoneGeometry` or `null` when unsupported.
+ */
 function parseGeometryJson(input: string): ZoneGeometry | null {
   const trimmed = input.trim();
   if (!trimmed) return null;
@@ -86,11 +100,24 @@ function parseGeometryJson(input: string): ZoneGeometry | null {
   return null;
 }
 
+/**
+ * Serializes geometry into pretty-printed JSON for display in the textarea.
+ *
+ * @param g - Geometry (or `null`).
+ * @returns Pretty JSON or empty string.
+ */
 function geometryToPrettyJson(g: ZoneGeometry | null): string {
   if (!g) return '';
   return JSON.stringify(g, null, 2);
 }
 
+/**
+ * Converts Mantine/Zod flattened errors (string array per field) into
+ * a Mantine-friendly object containing only the first error per field.
+ *
+ * @param errs - Field errors with possibly multiple messages per field.
+ * @returns First error per field key.
+ */
 function firstFieldError(errs: Record<string, string[] | undefined>) {
   const out: Record<string, string> = {};
   for (const [k, arr] of Object.entries(errs)) {
@@ -99,6 +126,31 @@ function firstFieldError(errs: Record<string, string[] | undefined>) {
   return out;
 }
 
+type ZoneFormProps = {
+  draftGeometry: ZoneGeometry | null;
+
+  onDraftGeometryChange: (g: ZoneGeometry | null) => void;
+
+  drawMode: DrawMode;
+
+  onDrawModeChange: (m: DrawMode) => void;
+
+  onClearDraft: () => void;
+
+  onGoToMap?: () => void;
+
+  onFocusGeometry?: (g: ZoneGeometry) => void;
+};
+
+/**
+ * Zone creation form.
+ *
+ * Features:
+ * - Validates values via Zod (runtime validation) using `createZoneFormSchema`.
+ * - Supports 3 geometry modes: draw on map, manual point entry, and GeoJSON paste.
+ * - Integrates with React Query mutation (`useCreateZone`) to create a zone in the API.
+ * - Provides success/error feedback and resets state on success.
+ */
 export default function ZoneForm({
   draftGeometry,
   onDraftGeometryChange,
@@ -107,18 +159,7 @@ export default function ZoneForm({
   onClearDraft,
   onGoToMap,
   onFocusGeometry,
-}: {
-  draftGeometry: ZoneGeometry | null;
-  onDraftGeometryChange: (g: ZoneGeometry | null) => void;
-
-  drawMode: DrawMode;
-  onDrawModeChange: (m: DrawMode) => void;
-
-  onClearDraft: () => void;
-
-  onGoToMap?: () => void;
-  onFocusGeometry?: (g: ZoneGeometry) => void;
-}) {
+}: ZoneFormProps) {
   const createZoneMutation = useCreateZone();
 
   const [geometryMode, setGeometryMode] = useState<GeometryMode>('DRAW');
@@ -167,11 +208,18 @@ export default function ZoneForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geometryMode]);
 
+  /**
+   * Memoized select options for zone types.
+   */
   const typeSelectData = useMemo(
     () => ZONE_TYPES.map((t) => ({ value: t, label: t })),
     [],
   );
 
+  /**
+   * Applies the GeoJSON text area value to the draft geometry (if valid).
+   * Also optionally switches user focus to the map and zooms to the geometry.
+   */
   const onApplyGeometryText = () => {
     setSubmitError(null);
     setSubmitSuccess(null);
@@ -194,6 +242,9 @@ export default function ZoneForm({
     }
   };
 
+  /**
+   * Builds a Point geometry from manually entered lat/lng and applies it.
+   */
   const onApplyPointManual = () => {
     setSubmitError(null);
     setSubmitSuccess(null);
@@ -210,6 +261,13 @@ export default function ZoneForm({
     onFocusGeometry?.(g);
   };
 
+  /**
+   * Submits the form:
+   * - ensures geometry is present
+   * - trims name
+   * - calls backend mutation
+   * - resets UI state on success
+   */
   const onSubmit = async (values: CreateZoneFormValues) => {
     setSubmitError(null);
     setSubmitSuccess(null);

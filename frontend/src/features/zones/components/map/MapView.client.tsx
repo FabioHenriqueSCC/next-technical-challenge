@@ -31,6 +31,12 @@ import {
   toLatLngTuple,
 } from './map.utils';
 
+/**
+ * Forces Leaflet to recalculate layout right after mount and on window resize.
+ *
+ * This prevents common "blank tiles / wrong map size" issues when the map is rendered
+ * inside containers that change size (e.g., flex layouts, tabs, drawers).
+ */
 function InvalidateSizeOnMount() {
   const map = useMap();
 
@@ -51,6 +57,12 @@ function InvalidateSizeOnMount() {
   return null;
 }
 
+/**
+ * Centers/zooms the map to the selected zone whenever `selectedZoneId` changes.
+ *
+ * - For `Point`, it uses `flyTo` and ensures at least `SELECT_POINT_MIN_ZOOM`.
+ * - For `Polygon`, it uses `fitBounds` based on the zone geometry bounds.
+ */
 function FitToSelected({
   zones,
   selectedZoneId,
@@ -93,6 +105,16 @@ function FitToSelected({
   return null;
 }
 
+/**
+ * Registers a callback that, when invoked, moves the map to a given geometry.
+ *
+ * This is useful when a parent (e.g., a form) wants to "preview" or "apply" a draft
+ * geometry and have the map focus it.
+ *
+ * The applied zoom rules are slightly different from selection:
+ * - For `Point`, it ensures at least `APPLY_POINT_MIN_ZOOM` and caps at `APPLY_MAX_ZOOM`.
+ * - For `Polygon`, it fits bounds capped at `APPLY_MAX_ZOOM`.
+ */
 function FlyToGeometryController({
   onRegister,
 }: {
@@ -133,6 +155,36 @@ function FlyToGeometryController({
   return null;
 }
 
+type MapViewProps = {
+  zones: Zone[];
+
+  selectedZoneId: string | null;
+
+  onSelectZone: (id: string | null) => void;
+
+  draftGeometry: ZoneGeometry | null;
+
+  onDraftGeometryChange: (g: ZoneGeometry | null) => void;
+
+  drawMode: DrawMode;
+
+  onDrawModeChange: (m: DrawMode) => void;
+
+  onRegisterClearDraft: (fn: (() => void) | null) => void;
+
+  onRegisterFlyToGeometry?: (fn: (g: ZoneGeometry) => void) => void;
+};
+
+/**
+ * Main map view for Zones.
+ *
+ * Features:
+ * - Renders zones as points (CircleMarker) and polygons.
+ * - Supports selecting a zone by clicking on it.
+ * - Shows a legend with counts by zone type (persisted via localStorage).
+ * - Integrates leaflet-draw via {@link DrawModeController}.
+ * - Auto fits to selection and supports external "fly to geometry" registration.
+ */
 export default function MapView({
   zones,
   selectedZoneId,
@@ -143,20 +195,7 @@ export default function MapView({
   onDrawModeChange,
   onRegisterClearDraft,
   onRegisterFlyToGeometry,
-}: {
-  zones: Zone[];
-  selectedZoneId: string | null;
-  onSelectZone: (id: string | null) => void;
-
-  draftGeometry: ZoneGeometry | null;
-  onDraftGeometryChange: (g: ZoneGeometry | null) => void;
-
-  drawMode: DrawMode;
-  onDrawModeChange: (m: DrawMode) => void;
-
-  onRegisterClearDraft: (fn: (() => void) | null) => void;
-  onRegisterFlyToGeometry?: (fn: (g: ZoneGeometry) => void) => void;
-}) {
+}: MapViewProps) {
   const isMobile = useMediaQuery('(max-width: 48em)');
 
   const counts = useMemo<Partial<Record<ZoneType, number>>>(() => {
@@ -173,7 +212,7 @@ export default function MapView({
       if (saved === '0') return false;
       if (saved === '1') return true;
     } catch {
-      // ignore
+      // ignore storage failures (private mode / blocked storage)
     }
     return true;
   });
@@ -189,7 +228,6 @@ export default function MapView({
 
   return (
     <div style={{ height: '100%', width: '100%', position: 'relative' }}>
-      {/* Toggle legenda */}
       <div
         style={{
           position: 'absolute',

@@ -16,10 +16,31 @@ import type { DrawMode } from './map/DrawModeController.client';
 
 import { BrandLogo } from '@/src/shared/components/BrandLogo';
 
+/**
+ * Schedules a callback to run after two animation frames.
+ *
+ * This is useful when a UI transition happens (e.g., closing a drawer) and
+ * the map needs a moment to reflow before performing operations like flyTo/fitBounds.
+ *
+ * @param cb - Callback to execute.
+ */
 function raf2(cb: () => void) {
   requestAnimationFrame(() => requestAnimationFrame(cb));
 }
 
+/**
+ * Zones page (main feature screen).
+ *
+ * Layout:
+ * - Desktop: fixed sidebar (list + create) and map on the right.
+ * - Mobile: drawer-based sidebar over the map.
+ *
+ * Responsibilities:
+ * - Fetch and filter zones (debounced search).
+ * - Manage selected zone state.
+ * - Manage draft geometry state used by the create form + draw tools.
+ * - Bridge sidebar actions to map behavior (clear draft, focus geometry).
+ */
 export default function ZonesPage() {
   const isMobile = useMediaQuery('(max-width: 48em)');
   const [drawerOpened, drawer] = useDisclosure(false);
@@ -40,16 +61,29 @@ export default function ZonesPage() {
 
   const headerHeight = 56;
 
+  /**
+   * Clears current draft geometry and disables drawing.
+   * Also asks the map controller to clear any drawn layers (if registered).
+   */
   const clearDraft = useCallback(() => {
     clearDraftRef.current?.();
     setDraftGeometry(null);
     setDrawMode('NONE');
   }, []);
 
+  /**
+   * On mobile, closes the drawer to bring focus back to the map.
+   */
   const goToMap = useCallback(() => {
     if (isMobile) drawer.close();
   }, [drawer, isMobile]);
 
+  /**
+   * Focuses the map on a given geometry.
+   *
+   * On mobile, closes the drawer first and waits for layout to settle
+   * before commanding the map to fly/fit (prevents sizing issues).
+   */
   const focusGeometry = useCallback(
     (g: ZoneGeometry) => {
       if (isMobile) {
@@ -63,6 +97,10 @@ export default function ZonesPage() {
     [drawer, isMobile],
   );
 
+  /**
+   * Handles selection from the zones table.
+   * On mobile, closes the drawer after selecting.
+   */
   const handleSelectZone = useCallback(
     (id: string | null) => {
       setSelectedZoneId(id);
@@ -71,6 +109,9 @@ export default function ZonesPage() {
     [drawer, isMobile],
   );
 
+  /**
+   * Sidebar content is rendered either in the desktop navbar or the mobile drawer.
+   */
   const sidebar = (
     <ZonesSidebarContent
       filterInput={filterInput}

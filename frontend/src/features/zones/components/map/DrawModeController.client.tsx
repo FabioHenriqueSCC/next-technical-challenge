@@ -10,6 +10,16 @@ import { ensureClosedRing, toLeafletLatLng, toLngLat } from './map.utils';
 
 export type DrawMode = 'NONE' | 'POINT' | 'POLYGON';
 
+/**
+ * Converts a Leaflet layer produced by leaflet-draw into the application's `ZoneGeometry`.
+ *
+ * Supported layers:
+ * - `L.Marker`   -> GeoJSON-like Point
+ * - `L.Polygon`  -> GeoJSON-like Polygon (first ring only)
+ *
+ * @param layer - Leaflet layer instance.
+ * @returns A normalized `ZoneGeometry` when supported; otherwise `null`.
+ */
 function layerToGeometry(layer: L.Layer): ZoneGeometry | null {
   if (layer instanceof L.Marker) {
     const ll = layer.getLatLng();
@@ -26,6 +36,12 @@ function layerToGeometry(layer: L.Layer): ZoneGeometry | null {
   return null;
 }
 
+/**
+ * Converts the application's `ZoneGeometry` into a Leaflet layer for rendering.
+ *
+ * @param geometry - Application geometry.
+ * @returns Leaflet layer representing the geometry.
+ */
 function geometryToLayer(geometry: ZoneGeometry): L.Layer {
   if (geometry.type === 'Point') {
     return L.marker(toLeafletLatLng(geometry.coordinates));
@@ -35,19 +51,36 @@ function geometryToLayer(geometry: ZoneGeometry): L.Layer {
   return L.polygon(ring);
 }
 
+type DrawModeControllerProps = {
+  mode: DrawMode;
+
+  draftGeometry: ZoneGeometry | null;
+
+  onGeometryChange: (g: ZoneGeometry | null) => void;
+
+  onModeChange: (m: DrawMode) => void;
+
+  onRegisterClear: (fn: (() => void) | null) => void;
+};
+
+/**
+ * Leaflet-draw controller for a React-Leaflet map.
+ *
+ * Responsibilities:
+ * - Creates and manages a `FeatureGroup` to hold drawn layers.
+ * - Enables/disables leaflet-draw handlers based on `mode`.
+ * - Listens to `draw:created` and emits normalized `ZoneGeometry`.
+ * - Renders `draftGeometry` (external state) into the FeatureGroup.
+ *
+ * This component renders nothing (`null`) and exists only for side effects.
+ */
 export default function DrawModeController({
   mode,
   draftGeometry,
   onGeometryChange,
   onModeChange,
   onRegisterClear,
-}: {
-  mode: DrawMode;
-  draftGeometry: ZoneGeometry | null;
-  onGeometryChange: (g: ZoneGeometry | null) => void;
-  onModeChange: (m: DrawMode) => void;
-  onRegisterClear: (fn: (() => void) | null) => void;
-}) {
+}: DrawModeControllerProps) {
   const map = useMap();
 
   const featureGroupRef = useRef<L.FeatureGroup | null>(null);

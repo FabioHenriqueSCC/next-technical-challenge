@@ -10,6 +10,14 @@ type BrandLogoProps = {
 
 const HORIZONTAL_RATIO = 5;
 
+/**
+ * Renders the ZoneAtlas logo using Next.js optimized images.
+ *
+ * The component automatically switches between light/dark assets based on the
+ * user's computed color scheme (via Mantine).
+ *
+ * @param props - {@link BrandLogoProps}
+ */
 export function BrandLogo({
   variant = 'horizontal',
   height = 25,

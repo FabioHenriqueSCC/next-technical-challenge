@@ -11,11 +11,17 @@ export const TYPE_COLOR: Record<ZoneType, string> = {
   ESPECIAL: '#ff6b6b',
 };
 
-export default function ZoneLegend({
-  counts,
-}: {
+type ZoneLegendProps = {
   counts: Partial<Record<ZoneType, number>>;
-}) {
+};
+
+/**
+ * Displays a compact legend for zone types with color indicators and counts.
+ *
+ * This component is used as an overlay on the map and is designed to remain readable
+ * over map tiles (semi-transparent background + blur).
+ */
+export default function ZoneLegend({ counts }: ZoneLegendProps) {
   const items = (Object.keys(TYPE_COLOR) as ZoneType[]).map((t) => ({
     type: t,
     color: TYPE_COLOR[t],
