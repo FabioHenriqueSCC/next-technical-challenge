@@ -1,8 +1,27 @@
 import Providers from './providers';
 
+import { ColorSchemeScript } from '@mantine/core';
+
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import './globals.css';
+
+export const metadata = {
+  title: {
+    default: 'ZoneAtlas',
+    template: '%s | ZoneAtlas',
+  },
+  description: 'Gestão e visualização de zonas',
+  icons: {
+    icon: [
+      { url: '/zoneatlas-mark.svg', media: '(prefers-color-scheme: light)' },
+      {
+        url: '/zoneatlas-mark-white.svg',
+        media: '(prefers-color-scheme: dark)',
+      },
+    ],
+  },
+};
 
 export default function RootLayout({
   children,
@@ -11,6 +30,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
+      <head>
+        <ColorSchemeScript defaultColorScheme="auto" />
+      </head>
       <body>
         <Providers>{children}</Providers>
       </body>

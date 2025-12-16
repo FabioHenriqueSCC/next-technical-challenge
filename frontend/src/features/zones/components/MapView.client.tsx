@@ -1,7 +1,7 @@
 'use client';
 
 import L from 'leaflet';
-import { useEffect, useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   MapContainer,
   TileLayer,
@@ -10,6 +10,9 @@ import {
   CircleMarker,
   useMap,
 } from 'react-leaflet';
+import { ActionIcon, Button } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
+import { IconEye, IconEyeOff, IconListDetails } from '@tabler/icons-react';
 
 import type { LatLngExpression } from 'leaflet';
 import type { Zone, ZoneType } from '../model/zone.types';
@@ -26,6 +29,12 @@ const toLatLng = (coord: [number, number]): [number, number] => {
   const [lng, lat] = coord;
   return [lat, lng];
 };
+
+const APPLY_POINT_MIN_ZOOM = 8;
+const APPLY_MAX_ZOOM = 8;
+
+const SELECT_POINT_MIN_ZOOM = 13;
+const SELECT_MAX_ZOOM = 15;
 
 function boundsFromGeometry(geometry: ZoneGeometry): L.LatLngBounds {
   if (geometry.type === 'Point') {
@@ -79,8 +88,70 @@ function FitToSelected({
     const z = zones.find((x) => x.id === selectedZoneId);
     if (!z) return;
 
-    map.fitBounds(boundsFromGeometry(z.geometry), { padding: [30, 30] });
+    if (z.geometry.type === 'Point') {
+      const [lat, lng] = toLatLng(z.geometry.coordinates);
+
+      const currentZoom = map.getZoom();
+      const desiredZoom =
+        currentZoom < SELECT_POINT_MIN_ZOOM
+          ? SELECT_POINT_MIN_ZOOM
+          : currentZoom;
+
+      const nextZoom = Math.min(SELECT_MAX_ZOOM, desiredZoom);
+
+      map.flyTo([lat, lng], nextZoom, {
+        animate: true,
+        duration: 0.6,
+      });
+      return;
+    }
+
+    map.fitBounds(boundsFromGeometry(z.geometry), {
+      padding: [30, 30],
+      maxZoom: SELECT_MAX_ZOOM,
+      animate: true,
+    });
   }, [map, zones, selectedZoneId]);
+
+  return null;
+}
+
+function FlyToGeometryController({
+  onRegister,
+}: {
+  onRegister?: (fn: (g: ZoneGeometry) => void) => void;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!onRegister) return;
+
+    onRegister((g: ZoneGeometry) => {
+      if (g.type === 'Point') {
+        const [lat, lng] = toLatLng(g.coordinates);
+
+        const currentZoom = map.getZoom();
+        const desiredZoom =
+          currentZoom < APPLY_POINT_MIN_ZOOM
+            ? APPLY_POINT_MIN_ZOOM
+            : currentZoom;
+
+        const nextZoom = Math.min(APPLY_MAX_ZOOM, desiredZoom);
+
+        map.flyTo([lat, lng], nextZoom, {
+          animate: true,
+          duration: 0.8,
+        });
+        return;
+      }
+
+      map.fitBounds(boundsFromGeometry(g), {
+        padding: [30, 30],
+        maxZoom: APPLY_MAX_ZOOM,
+        animate: true,
+      });
+    });
+  }, [map, onRegister]);
 
   return null;
 }
@@ -94,6 +165,7 @@ export default function MapView({
   drawMode,
   onDrawModeChange,
   onRegisterClearDraft,
+  onRegisterFlyToGeometry,
 }: {
   zones: Zone[];
   selectedZoneId: string | null;
@@ -106,7 +178,11 @@ export default function MapView({
   onDrawModeChange: (m: DrawMode) => void;
 
   onRegisterClearDraft: (fn: (() => void) | null) => void;
+
+  onRegisterFlyToGeometry?: (fn: (g: ZoneGeometry) => void) => void;
 }) {
+  const isMobile = useMediaQuery('(max-width: 48em)');
+
   const counts = useMemo<Partial<Record<ZoneType, number>>>(() => {
     const c: Partial<Record<ZoneType, number>> = {};
     zones.forEach((z) => {
@@ -115,11 +191,72 @@ export default function MapView({
     return c;
   }, [zones]);
 
+  const [legendOpen, setLegendOpen] = useState<boolean>(() => {
+    try {
+      const saved = window.localStorage.getItem('zones.legend.open');
+      if (saved === '0') return false;
+      if (saved === '1') return true;
+    } catch {
+      // ignore
+    }
+    return true;
+  });
+
+  const setLegend = (next: boolean) => {
+    setLegendOpen(next);
+    try {
+      window.localStorage.setItem('zones.legend.open', next ? '1' : '0');
+    } catch {}
+  };
+
   return (
     <div style={{ height: '100%', width: '100%', position: 'relative' }}>
-      <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 1000 }}>
-        <ZoneLegend counts={counts} />
+      <div
+        style={{
+          position: 'absolute',
+          top: 12,
+          right: 12,
+          zIndex: 1200,
+          display: 'flex',
+          gap: 8,
+          alignItems: 'center',
+          pointerEvents: 'auto',
+        }}
+      >
+        {isMobile ? (
+          <Button
+            size="xs"
+            variant="filled"
+            leftSection={<IconListDetails size={14} />}
+            onClick={() => setLegend(!legendOpen)}
+          >
+            Legenda
+          </Button>
+        ) : (
+          <ActionIcon
+            variant="filled"
+            size="lg"
+            aria-label={legendOpen ? 'Ocultar legenda' : 'Mostrar legenda'}
+            onClick={() => setLegend(!legendOpen)}
+          >
+            {legendOpen ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+          </ActionIcon>
+        )}
       </div>
+
+      {legendOpen ? (
+        <div
+          style={{
+            position: 'absolute',
+            top: isMobile ? 52 : 12,
+            right: 12,
+            zIndex: 1100,
+            pointerEvents: 'auto',
+          }}
+        >
+          <ZoneLegend counts={counts} />
+        </div>
+      ) : null}
 
       <MapContainer
         center={[-23.55, -46.64]}
@@ -135,6 +272,7 @@ export default function MapView({
         <TileLayer attribution="&copy; OpenStreetMap" url={TILE_URL} />
 
         <FitToSelected zones={zones} selectedZoneId={selectedZoneId} />
+        <FlyToGeometryController onRegister={onRegisterFlyToGeometry} />
 
         <DrawModeController
           mode={drawMode}

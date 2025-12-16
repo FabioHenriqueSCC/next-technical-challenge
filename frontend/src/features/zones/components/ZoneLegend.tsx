@@ -30,7 +30,12 @@ export default function ZoneLegend({
       style={{
         background: 'rgba(20,20,20,0.72)',
         backdropFilter: 'blur(6px)',
-        width: 220,
+
+        width: 'clamp(180px, 52vw, 240px)',
+        maxWidth: 'calc(100vw - 24px)',
+
+        maxHeight: 'min(42vh, 320px)',
+        overflowY: 'auto',
       }}
     >
       <Text fw={700} size="sm" mb={6}>
@@ -48,6 +53,7 @@ export default function ZoneLegend({
                   borderRadius: 999,
                   background: it.color,
                   display: 'inline-block',
+                  flex: '0 0 auto',
                 }}
               />
               <Text size="sm">{it.type}</Text>

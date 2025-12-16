@@ -1,0 +1,20 @@
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" width="720" height="200" viewBox="52.800000 32.732733 507.600000 133.633634" fill="none" preserveAspectRatio="xMinYMid meet">
+  <ns0:g transform="translate(30,10) scale(0.7)">
+    <ns0:circle cx="128" cy="128" r="86" stroke="currentColor" stroke-width="12" />
+    <ns0:path d="M128 42c-26 20-42 51-42 86s16 66 42 86" stroke="currentColor" stroke-width="10" stroke-linecap="round" />
+    <ns0:path d="M128 42c26 20 42 51 42 86s-16 66-42 86" stroke="currentColor" stroke-width="10" stroke-linecap="round" />
+    <ns0:path d="M58 110h140" stroke="currentColor" stroke-width="10" stroke-linecap="round" />
+    <ns0:path d="M64 146h128" stroke="currentColor" stroke-width="10" stroke-linecap="round" />
+    <ns0:path d="M170 116c0 22-18 40-40 40s-40-18-40-40 18-40 40-40 40 18 40 40Z" stroke="#2563EB" stroke-width="12" />
+    <ns0:path d="M130 156c12-14 22-30 22-40 0-12-10-22-22-22s-22 10-22 22c0 10 10 26 22 40Z" fill="#2563EB" />
+    <ns0:circle cx="130" cy="116" r="7" fill="white" />
+  </ns0:g>
+
+  <ns0:text x="250" y="112" fill="currentColor" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" font-size="64" font-weight="700" letter-spacing="-1">
+    ZoneAtlas
+  </ns0:text>
+
+  <ns0:text x="252" y="152" fill="currentColor" opacity="0.72" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" font-size="20">
+    Gestão e visualização de zonas
+  </ns0:text>
+</ns0:svg>
