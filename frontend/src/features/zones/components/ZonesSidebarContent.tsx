@@ -20,6 +20,8 @@ export default function ZonesSidebarContent({
   drawMode,
   onDrawModeChange,
   onClearDraft,
+  onGoToMap,
+  onFocusGeometry,
 }: {
   filterInput: string;
   onFilterInputChange: (v: string) => void;
@@ -38,6 +40,9 @@ export default function ZonesSidebarContent({
   onDrawModeChange: (m: DrawMode) => void;
 
   onClearDraft: () => void;
+
+  onGoToMap?: () => void;
+  onFocusGeometry?: (g: ZoneGeometry) => void;
 }) {
   return (
     <Stack gap="md" style={{ height: '100%' }}>
@@ -78,6 +83,8 @@ export default function ZonesSidebarContent({
             drawMode={drawMode}
             onDrawModeChange={onDrawModeChange}
             onClearDraft={onClearDraft}
+            onGoToMap={onGoToMap}
+            onFocusGeometry={onFocusGeometry}
           />
         </Tabs.Panel>
       </Tabs>

@@ -27,9 +27,14 @@ const toLatLng = (coord: [number, number]): [number, number] => {
   return [lat, lng];
 };
 
+const APPLY_POINT_MIN_ZOOM = 8;
+const APPLY_MAX_ZOOM = 8;
+const SELECT_MAX_ZOOM = 8;
+
 function boundsFromGeometry(geometry: ZoneGeometry): L.LatLngBounds {
   if (geometry.type === 'Point') {
     const [lat, lng] = toLatLng(geometry.coordinates);
+
     return L.latLngBounds(
       [lat - 0.002, lng - 0.002],
       [lat + 0.002, lng + 0.002],
@@ -79,8 +84,53 @@ function FitToSelected({
     const z = zones.find((x) => x.id === selectedZoneId);
     if (!z) return;
 
-    map.fitBounds(boundsFromGeometry(z.geometry), { padding: [30, 30] });
+    map.fitBounds(boundsFromGeometry(z.geometry), {
+      padding: [30, 30],
+      maxZoom: SELECT_MAX_ZOOM,
+      animate: true,
+    });
   }, [map, zones, selectedZoneId]);
+
+  return null;
+}
+
+// ✅ Controller para focar no geometry aplicado (Point/Polygon)
+function FlyToGeometryController({
+  onRegister,
+}: {
+  onRegister?: (fn: (g: ZoneGeometry) => void) => void;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!onRegister) return;
+
+    onRegister((g: ZoneGeometry) => {
+      if (g.type === 'Point') {
+        const [lat, lng] = toLatLng(g.coordinates);
+
+        const currentZoom = map.getZoom();
+        const desiredZoom =
+          currentZoom < APPLY_POINT_MIN_ZOOM
+            ? APPLY_POINT_MIN_ZOOM
+            : currentZoom;
+
+        const nextZoom = Math.min(APPLY_MAX_ZOOM, desiredZoom);
+
+        map.flyTo([lat, lng], nextZoom, {
+          animate: true,
+          duration: 0.8,
+        });
+        return;
+      }
+
+      map.fitBounds(boundsFromGeometry(g), {
+        padding: [30, 30],
+        maxZoom: APPLY_MAX_ZOOM,
+        animate: true,
+      });
+    });
+  }, [map, onRegister]);
 
   return null;
 }
@@ -94,6 +144,7 @@ export default function MapView({
   drawMode,
   onDrawModeChange,
   onRegisterClearDraft,
+  onRegisterFlyToGeometry,
 }: {
   zones: Zone[];
   selectedZoneId: string | null;
@@ -106,6 +157,8 @@ export default function MapView({
   onDrawModeChange: (m: DrawMode) => void;
 
   onRegisterClearDraft: (fn: (() => void) | null) => void;
+
+  onRegisterFlyToGeometry?: (fn: (g: ZoneGeometry) => void) => void;
 }) {
   const counts = useMemo<Partial<Record<ZoneType, number>>>(() => {
     const c: Partial<Record<ZoneType, number>> = {};
@@ -135,6 +188,7 @@ export default function MapView({
         <TileLayer attribution="&copy; OpenStreetMap" url={TILE_URL} />
 
         <FitToSelected zones={zones} selectedZoneId={selectedZoneId} />
+        <FlyToGeometryController onRegister={onRegisterFlyToGeometry} />
 
         <DrawModeController
           mode={drawMode}
