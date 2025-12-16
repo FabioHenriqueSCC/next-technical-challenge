@@ -1,14 +1,6 @@
 'use client';
 
-import {
-  AppShell,
-  Burger,
-  Group,
-  Text,
-  Drawer,
-  ActionIcon,
-  Tooltip,
-} from '@mantine/core';
+import { AppShell, Burger, Group, Drawer } from '@mantine/core';
 import {
   useDebouncedValue,
   useDisclosure,
@@ -21,6 +13,8 @@ import ZonesSidebarContent from './ZonesSidebarContent';
 import type { ZoneGeometry } from '../model/zone.geometry';
 import MapView from './MapView.client';
 import type { DrawMode } from './DrawModeController.client';
+
+import { BrandLogo } from '@/src/shared/components/BrandLogo';
 
 export default function ZonesPage() {
   const isMobile = useMediaQuery('(max-width: 48em)');
@@ -72,8 +66,13 @@ export default function ZonesPage() {
       padding="md"
     >
       <AppShell.Header>
-        <Group h="100%" px="md" justify="space-between">
-          <Group gap="sm">
+        <Group h="100%" px={0} justify="space-between" wrap="nowrap">
+          <Group
+            gap={12}
+            align="center"
+            wrap="nowrap"
+            style={{ paddingLeft: 12 }}
+          >
             {isMobile ? (
               <Burger
                 opened={drawerOpened}
@@ -81,18 +80,9 @@ export default function ZonesPage() {
                 aria-label="Abrir menu"
               />
             ) : null}
-            <Text fw={700}>Zones</Text>
-          </Group>
 
-          <Tooltip label="Limpar seleção">
-            <ActionIcon
-              variant="light"
-              onClick={() => setSelectedZoneId(null)}
-              aria-label="Limpar seleção"
-            >
-              ✕
-            </ActionIcon>
-          </Tooltip>
+            <BrandLogo height={isMobile ? 32 : 48} />
+          </Group>
         </Group>
       </AppShell.Header>
 

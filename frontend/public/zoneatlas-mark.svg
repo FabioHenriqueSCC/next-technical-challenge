@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <!-- Outer atlas -->
+  <circle cx="128" cy="128" r="86" stroke="currentColor" stroke-width="12"></circle>
+  <!-- Meridians -->
+  <path d="M128 42c-26 20-42 51-42 86s16 66 42 86" stroke="currentColor" stroke-width="10" stroke-linecap="round"></path>
+  <path d="M128 42c26 20 42 51 42 86s-16 66-42 86" stroke="currentColor" stroke-width="10" stroke-linecap="round"></path>
+  <!-- Parallels -->
+  <path d="M58 110h140" stroke="currentColor" stroke-width="10" stroke-linecap="round"></path>
+  <path d="M64 146h128" stroke="currentColor" stroke-width="10" stroke-linecap="round"></path>
+
+  <!-- Pin (accent) -->
+  <path d="M170 116c0 22-18 40-40 40s-40-18-40-40 18-40 40-40 40 18 40 40Z" stroke="#2563EB" stroke-width="12"></path>
+  <path d="M130 156c12-14 22-30 22-40 0-12-10-22-22-22s-22 10-22 22c0 10 10 26 22 40Z" fill="#2563EB"></path>
+  <circle cx="130" cy="116" r="7" fill="white"></circle>
+</svg>

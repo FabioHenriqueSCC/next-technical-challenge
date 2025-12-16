@@ -11,7 +11,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <MantineProvider defaultColorScheme="dark">{children}</MantineProvider>
+      <MantineProvider defaultColorScheme="auto">{children}</MantineProvider>
     </QueryClientProvider>
   );
 }
