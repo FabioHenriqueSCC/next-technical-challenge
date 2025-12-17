@@ -40,6 +40,7 @@ Aplicação **Full Stack** para gestão de zoneamento urbano com **mapa interati
 O projeto foi conduzido como uma amostra de trabalho real:
 
 - Utilização de **Gitflow**.
+- Gerenciamento e documentação de tarefas via metodologia Kanban. [Board - Zone Atlas](https://github.com/users/FabioHenriqueSCC/projects/8)
 - Branch `dev` definida como default para desenvolvimento contínuo.
 - Evolução via **PRs** (garantindo rastreamento e organização do histórico).
 

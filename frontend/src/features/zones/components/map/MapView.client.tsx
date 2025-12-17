@@ -276,7 +276,7 @@ export default function MapView({
       ) : null}
 
       <MapContainer
-        center={[-23.55, -46.64]}
+        center={[-22.2499, -45.7198]}
         zoom={12}
         style={{
           height: '100%',
