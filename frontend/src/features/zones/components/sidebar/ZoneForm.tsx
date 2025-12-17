@@ -17,33 +17,36 @@ import { useForm } from '@mantine/form';
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 
-import type { ZoneGeometry } from '../model/zone.geometry';
-import type { ZoneType } from '../model/zone.types';
-import type { DrawMode } from './DrawModeController.client';
-import { useCreateZone } from '../hooks/useCreateZone';
+import type { ZoneGeometry } from '../../model/zone.geometry';
+import {
+  ZONE_TYPES,
+  type CreateZoneDTO,
+  type ZoneType,
+} from '../../model/zone.types';
+import type { DrawMode } from '../map/DrawModeController.client';
+import { useCreateZone } from '../../hooks/useCreateZone';
 
-type CreateZoneDTO = {
-  name: string;
-  type: ZoneType;
-  geometry: ZoneGeometry;
-};
-
-type CreateZoneFormValues = {
-  name: string;
-  type: ZoneType;
-  geometry: ZoneGeometry | null;
-};
+import {
+  createZoneFormSchema,
+  type CreateZoneFormValues,
+} from '../../model/zone.schema';
 
 type GeometryMode = 'DRAW' | 'POINT_MANUAL' | 'GEOJSON';
 
-const ZONE_TYPES: ZoneType[] = [
-  'RESIDENCIAL',
-  'COMERCIAL',
-  'INDUSTRIAL',
-  'MISTO',
-  'ESPECIAL',
-];
-
+/**
+ * Parses a JSON string into a `ZoneGeometry` supported by the UI.
+ *
+ * Supported:
+ * - `Point` with `[lng, lat]`
+ * - `Polygon` with coordinates as `[[[lng, lat], ...]]` (reads the first ring only)
+ *
+ * Notes:
+ * - Returns `null` if the object shape is not recognized.
+ * - Throws if the input is not valid JSON (caller handles the try/catch).
+ *
+ * @param input - Raw JSON text.
+ * @returns Parsed `ZoneGeometry` or `null` when unsupported.
+ */
 function parseGeometryJson(input: string): ZoneGeometry | null {
   const trimmed = input.trim();
   if (!trimmed) return null;
@@ -97,11 +100,57 @@ function parseGeometryJson(input: string): ZoneGeometry | null {
   return null;
 }
 
+/**
+ * Serializes geometry into pretty-printed JSON for display in the textarea.
+ *
+ * @param g - Geometry (or `null`).
+ * @returns Pretty JSON or empty string.
+ */
 function geometryToPrettyJson(g: ZoneGeometry | null): string {
   if (!g) return '';
   return JSON.stringify(g, null, 2);
 }
 
+/**
+ * Converts Mantine/Zod flattened errors (string array per field) into
+ * a Mantine-friendly object containing only the first error per field.
+ *
+ * @param errs - Field errors with possibly multiple messages per field.
+ * @returns First error per field key.
+ */
+function firstFieldError(errs: Record<string, string[] | undefined>) {
+  const out: Record<string, string> = {};
+  for (const [k, arr] of Object.entries(errs)) {
+    if (arr && arr.length > 0) out[k] = arr[0];
+  }
+  return out;
+}
+
+type ZoneFormProps = {
+  draftGeometry: ZoneGeometry | null;
+
+  onDraftGeometryChange: (g: ZoneGeometry | null) => void;
+
+  drawMode: DrawMode;
+
+  onDrawModeChange: (m: DrawMode) => void;
+
+  onClearDraft: () => void;
+
+  onGoToMap?: () => void;
+
+  onFocusGeometry?: (g: ZoneGeometry) => void;
+};
+
+/**
+ * Zone creation form.
+ *
+ * Features:
+ * - Validates values via Zod (runtime validation) using `createZoneFormSchema`.
+ * - Supports 3 geometry modes: draw on map, manual point entry, and GeoJSON paste.
+ * - Integrates with React Query mutation (`useCreateZone`) to create a zone in the API.
+ * - Provides success/error feedback and resets state on success.
+ */
 export default function ZoneForm({
   draftGeometry,
   onDraftGeometryChange,
@@ -110,18 +159,7 @@ export default function ZoneForm({
   onClearDraft,
   onGoToMap,
   onFocusGeometry,
-}: {
-  draftGeometry: ZoneGeometry | null;
-  onDraftGeometryChange: (g: ZoneGeometry | null) => void;
-
-  drawMode: DrawMode;
-  onDrawModeChange: (m: DrawMode) => void;
-
-  onClearDraft: () => void;
-
-  onGoToMap?: () => void;
-  onFocusGeometry?: (g: ZoneGeometry) => void;
-}) {
+}: ZoneFormProps) {
   const createZoneMutation = useCreateZone();
 
   const [geometryMode, setGeometryMode] = useState<GeometryMode>('DRAW');
@@ -133,8 +171,8 @@ export default function ZoneForm({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
 
-  const [lat, setLat] = useState<number | string>('');
-  const [lng, setLng] = useState<number | string>('');
+  const [lat, setLat] = useState<number | ''>('');
+  const [lng, setLng] = useState<number | ''>('');
 
   const form = useForm<CreateZoneFormValues>({
     initialValues: {
@@ -142,12 +180,13 @@ export default function ZoneForm({
       type: 'RESIDENCIAL',
       geometry: null,
     },
-    validate: {
-      name: (v) =>
-        v.trim().length < 2 ? 'Nome deve ter pelo menos 2 caracteres' : null,
-      type: (v) => (ZONE_TYPES.includes(v) ? null : 'Tipo inválido'),
-      geometry: (g) =>
-        g ? null : 'Informe a geometria (desenhe no mapa ou informe um ponto).',
+    validate: (values) => {
+      const parsed = createZoneFormSchema.safeParse(values);
+      if (parsed.success) return {};
+      const flat = parsed.error.flatten();
+      return firstFieldError(
+        flat.fieldErrors as Record<string, string[] | undefined>,
+      );
     },
   });
 
@@ -169,11 +208,18 @@ export default function ZoneForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geometryMode]);
 
+  /**
+   * Memoized select options for zone types.
+   */
   const typeSelectData = useMemo(
     () => ZONE_TYPES.map((t) => ({ value: t, label: t })),
     [],
   );
 
+  /**
+   * Applies the GeoJSON text area value to the draft geometry (if valid).
+   * Also optionally switches user focus to the map and zooms to the geometry.
+   */
   const onApplyGeometryText = () => {
     setSubmitError(null);
     setSubmitSuccess(null);
@@ -189,15 +235,16 @@ export default function ZoneForm({
       setJsonError(null);
 
       onDraftGeometryChange(g);
-
       onGoToMap?.();
-
       onFocusGeometry?.(g);
     } catch {
       setJsonError('JSON inválido (erro ao parsear).');
     }
   };
 
+  /**
+   * Builds a Point geometry from manually entered lat/lng and applies it.
+   */
   const onApplyPointManual = () => {
     setSubmitError(null);
     setSubmitSuccess(null);
@@ -214,6 +261,13 @@ export default function ZoneForm({
     onFocusGeometry?.(g);
   };
 
+  /**
+   * Submits the form:
+   * - ensures geometry is present
+   * - trims name
+   * - calls backend mutation
+   * - resets UI state on success
+   */
   const onSubmit = async (values: CreateZoneFormValues) => {
     setSubmitError(null);
     setSubmitSuccess(null);
@@ -349,14 +403,14 @@ export default function ZoneForm({
                 label="Latitude"
                 placeholder="-23.5599"
                 value={lat}
-                onChange={setLat}
+                onChange={(v) => setLat(typeof v === 'number' ? v : '')}
                 decimalScale={7}
               />
               <NumberInput
                 label="Longitude"
                 placeholder="-46.6402"
                 value={lng}
-                onChange={setLng}
+                onChange={(v) => setLng(typeof v === 'number' ? v : '')}
                 decimalScale={7}
               />
             </Group>
@@ -412,7 +466,7 @@ export default function ZoneForm({
 
         {form.errors.geometry ? (
           <Text size="xs" c="red">
-            {form.errors.geometry}
+            {String(form.errors.geometry)}
           </Text>
         ) : null}
 

@@ -6,16 +6,41 @@ import {
   useDisclosure,
   useMediaQuery,
 } from '@mantine/hooks';
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useZones } from '../hooks/useZones';
-import ZonesSidebarContent from './ZonesSidebarContent';
+import ZonesSidebarContent from './sidebar/ZonesSidebarContent';
 import type { ZoneGeometry } from '../model/zone.geometry';
-import MapView from './MapView.client';
-import type { DrawMode } from './DrawModeController.client';
+import MapView from './map/MapView.client';
+import type { DrawMode } from './map/DrawModeController.client';
 
 import { BrandLogo } from '@/src/shared/components/BrandLogo';
 
+/**
+ * Schedules a callback to run after two animation frames.
+ *
+ * This is useful when a UI transition happens (e.g., closing a drawer) and
+ * the map needs a moment to reflow before performing operations like flyTo/fitBounds.
+ *
+ * @param cb - Callback to execute.
+ */
+function raf2(cb: () => void) {
+  requestAnimationFrame(() => requestAnimationFrame(cb));
+}
+
+/**
+ * Zones page (main feature screen).
+ *
+ * Layout:
+ * - Desktop: fixed sidebar (list + create) and map on the right.
+ * - Mobile: drawer-based sidebar over the map.
+ *
+ * Responsibilities:
+ * - Fetch and filter zones (debounced search).
+ * - Manage selected zone state.
+ * - Manage draft geometry state used by the create form + draw tools.
+ * - Bridge sidebar actions to map behavior (clear draft, focus geometry).
+ */
 export default function ZonesPage() {
   const isMobile = useMediaQuery('(max-width: 48em)');
   const [drawerOpened, drawer] = useDisclosure(false);
@@ -34,25 +59,59 @@ export default function ZonesPage() {
   const zonesQuery = useZones(filterDebounced);
   const zones = useMemo(() => zonesQuery.data ?? [], [zonesQuery.data]);
 
-  const clearDraft = () => {
+  const headerHeight = 56;
+
+  /**
+   * Clears current draft geometry and disables drawing.
+   * Also asks the map controller to clear any drawn layers (if registered).
+   */
+  const clearDraft = useCallback(() => {
     clearDraftRef.current?.();
     setDraftGeometry(null);
     setDrawMode('NONE');
-  };
+  }, []);
 
-  const goToMap = () => {
+  /**
+   * On mobile, closes the drawer to bring focus back to the map.
+   */
+  const goToMap = useCallback(() => {
     if (isMobile) drawer.close();
-  };
+  }, [drawer, isMobile]);
 
-  const focusGeometry = (g: ZoneGeometry) => {
-    if (isMobile) {
-      drawer.close();
-      setTimeout(() => flyToGeometryRef.current?.(g), 50);
-      return;
-    }
-    flyToGeometryRef.current?.(g);
-  };
+  /**
+   * Focuses the map on a given geometry.
+   *
+   * On mobile, closes the drawer first and waits for layout to settle
+   * before commanding the map to fly/fit (prevents sizing issues).
+   */
+  const focusGeometry = useCallback(
+    (g: ZoneGeometry) => {
+      if (isMobile) {
+        drawer.close();
+        raf2(() => flyToGeometryRef.current?.(g));
+        return;
+      }
 
+      flyToGeometryRef.current?.(g);
+    },
+    [drawer, isMobile],
+  );
+
+  /**
+   * Handles selection from the zones table.
+   * On mobile, closes the drawer after selecting.
+   */
+  const handleSelectZone = useCallback(
+    (id: string | null) => {
+      setSelectedZoneId(id);
+      if (isMobile) drawer.close();
+    },
+    [drawer, isMobile],
+  );
+
+  /**
+   * Sidebar content is rendered either in the desktop navbar or the mobile drawer.
+   */
   const sidebar = (
     <ZonesSidebarContent
       filterInput={filterInput}
@@ -61,10 +120,7 @@ export default function ZonesPage() {
       isLoading={zonesQuery.isLoading}
       isError={zonesQuery.isError}
       selectedZoneId={selectedZoneId}
-      onSelectZone={(id: string | null) => {
-        setSelectedZoneId(id);
-        if (isMobile) drawer.close();
-      }}
+      onSelectZone={handleSelectZone}
       draftGeometry={draftGeometry}
       onDraftGeometryChange={setDraftGeometry}
       drawMode={drawMode}
@@ -74,8 +130,6 @@ export default function ZonesPage() {
       onFocusGeometry={focusGeometry}
     />
   );
-
-  const headerHeight = 56;
 
   return (
     <AppShell

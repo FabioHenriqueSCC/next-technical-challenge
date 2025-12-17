@@ -1,7 +1,7 @@
 'use client';
 
 import { Paper, Group, Text, Stack, Badge } from '@mantine/core';
-import type { ZoneType } from '../model/zone.types';
+import type { ZoneType } from '../../model/zone.types';
 
 export const TYPE_COLOR: Record<ZoneType, string> = {
   RESIDENCIAL: '#4dabf7',
@@ -11,11 +11,17 @@ export const TYPE_COLOR: Record<ZoneType, string> = {
   ESPECIAL: '#ff6b6b',
 };
 
-export default function ZoneLegend({
-  counts,
-}: {
+type ZoneLegendProps = {
   counts: Partial<Record<ZoneType, number>>;
-}) {
+};
+
+/**
+ * Displays a compact legend for zone types with color indicators and counts.
+ *
+ * This component is used as an overlay on the map and is designed to remain readable
+ * over map tiles (semi-transparent background + blur).
+ */
+export default function ZoneLegend({ counts }: ZoneLegendProps) {
   const items = (Object.keys(TYPE_COLOR) as ZoneType[]).map((t) => ({
     type: t,
     color: TYPE_COLOR[t],
@@ -30,16 +36,14 @@ export default function ZoneLegend({
       style={{
         background: 'rgba(20,20,20,0.72)',
         backdropFilter: 'blur(6px)',
-
         width: 'clamp(180px, 52vw, 240px)',
         maxWidth: 'calc(100vw - 24px)',
-
         maxHeight: 'min(42vh, 320px)',
         overflowY: 'auto',
       }}
     >
       <Text fw={700} size="sm" mb={6}>
-        Zone Types
+        Tipos de zona
       </Text>
 
       <Stack gap={6}>

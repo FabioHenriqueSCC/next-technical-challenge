@@ -1,12 +1,14 @@
-import Providers from './providers';
-
+import type { Metadata } from 'next';
 import { ColorSchemeScript } from '@mantine/core';
 
+import Providers from './providers';
+
+import '@mantine/core/styles.css';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import './globals.css';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: {
     default: 'ZoneAtlas',
     template: '%s | ZoneAtlas',
