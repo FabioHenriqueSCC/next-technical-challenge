@@ -13,10 +13,34 @@ import { IconX } from '@tabler/icons-react';
 
 import ZonesTable from './ZonesTable';
 import ZoneForm from './ZoneForm';
-import type { Zone } from '../model/zone.types';
-import type { ZoneGeometry } from '../model/zone.geometry';
-import type { DrawMode } from './DrawModeController.client';
+import type { Zone } from '../../model/zone.types';
+import type { ZoneGeometry } from '../../model/zone.geometry';
+import type { DrawMode } from '../map/DrawModeController.client';
 
+type ZonesSidebarContentProps = {
+  filterInput: string;
+  onFilterInputChange: (v: string) => void;
+  zones: Zone[];
+  isLoading: boolean;
+  isError: boolean;
+  selectedZoneId: string | null;
+  onSelectZone: (id: string | null) => void;
+  draftGeometry: ZoneGeometry | null;
+  onDraftGeometryChange: (g: ZoneGeometry | null) => void;
+  drawMode: DrawMode;
+  onDrawModeChange: (m: DrawMode) => void;
+  onClearDraft: () => void;
+  onGoToMap?: () => void;
+  onFocusGeometry?: (g: ZoneGeometry) => void;
+};
+
+/**
+ * Sidebar content for the Zones page.
+ *
+ * Provides two tabs:
+ * - **List**: search input + zones table
+ * - **Create**: zone creation form (integrated with map drawing)
+ */
 export default function ZonesSidebarContent({
   filterInput,
   onFilterInputChange,
@@ -32,28 +56,7 @@ export default function ZonesSidebarContent({
   onClearDraft,
   onGoToMap,
   onFocusGeometry,
-}: {
-  filterInput: string;
-  onFilterInputChange: (v: string) => void;
-
-  zones: Zone[];
-  isLoading: boolean;
-  isError: boolean;
-
-  selectedZoneId: string | null;
-  onSelectZone: (id: string | null) => void;
-
-  draftGeometry: ZoneGeometry | null;
-  onDraftGeometryChange: (g: ZoneGeometry | null) => void;
-
-  drawMode: DrawMode;
-  onDrawModeChange: (m: DrawMode) => void;
-
-  onClearDraft: () => void;
-
-  onGoToMap?: () => void;
-  onFocusGeometry?: (g: ZoneGeometry) => void;
-}) {
+}: ZonesSidebarContentProps) {
   const hasFilter = filterInput.trim().length > 0;
 
   return (

@@ -1,10 +1,8 @@
 @import 'tailwindcss';
-@import 'leaflet-draw/dist/leaflet.draw.css';
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
-
   --accent: #2563eb;
 }
 
